@@ -1,0 +1,42 @@
+---
+description: Repository agent instructions (generated from AGENTS.md)
+alwaysApply: true
+---
+<!-- gearness:generated from AGENTS.md - do not edit by hand. Edit AGENTS.md, then run `gearness sync`. -->
+
+# AGENTS.md - gearness
+
+> Entry point for AI coding agents. This file is a **map, not a manual**: keep it short and link to deeper docs.
+> It is the single source of truth for all agent tools. Edit it here, then run `gearness sync`.
+
+## Project
+gearness is an open-source CLI that treats the harness around AI coding agents as code: it scaffolds AGENTS.md and context docs, lints them, scores them 0–100, keeps agent-specific files (CLAUDE.md, Cursor, Copilot) in sync, and records agent failures as durable guardrails (the ratchet). Must never break: `init` never destroys user content; `lint`/`doctor` exit codes are a public contract used by CI.
+
+## Commands
+A task is **not done** until `test` and `typecheck` pass.
+
+| Purpose | Command |
+|---|---|
+| install | `npm ci` |
+| build | `npm run build` |
+| typecheck | `npm run typecheck` |
+| test | `npm run test` |
+
+## Map
+- [Architecture](../../docs/ARCHITECTURE.md) - modules, boundaries and data flow. Read before touching more than one module.
+- [Conventions](../../docs/CONVENTIONS.md) - code style, naming, patterns to follow and patterns to avoid.
+- [Rules reference](../../docs/rules.md) - generated table of every rule; regenerate with `npm run docs:rules`.
+- [Status](../../docs/STATUS.md) - work in progress and handoff notes. **Read first, update last.**
+
+## Working agreement
+1. Read `docs/STATUS.md` before starting; update it before you stop.
+2. Make small, reviewable changes. One concern per change.
+3. Do not edit generated files, lockfiles or vendored code unless the task requires it.
+4. When a check fails, fix the cause. Never disable, skip or weaken a check to make it pass.
+5. When unsure about a boundary or convention, read the linked doc instead of guessing.
+
+## Learned rules
+Added after real agent failures (history in `.harness/ratchet.yaml`). Do not remove without discussion.
+
+<!-- gearness:learned-rules:start -->
+<!-- gearness:learned-rules:end -->

@@ -1,0 +1,83 @@
+name: gearness harness gate
+description: Lint, score and report the AI coding agent harness (AGENTS.md, docs, boundaries, adapters, ratchet) of a repository.
+branding:
+  icon: shield
+  color: green
+inputs:
+  working-directory:
+    description: Directory that contains harness.yaml.
+    required: false
+    default: "."
+  min-score:
+    description: Override gates.minScore from harness.yaml.
+    required: false
+    default: ""
+  sarif:
+    description: Also write gearness.sarif for upload to GitHub code scanning ("true"/"false").
+    required: false
+    default: "false"
+  comment:
+    description: 'On pull requests, post the report as one PR comment, updated on every push ("true"/"false"). Needs the pull-requests write permission.'
+    required: false
+    default: "false"
+  github-token:
+    description: Token used to post the PR comment.
+    required: false
+    default: ${{ github.token }}
+  summary:
+    description: Write a markdown report to the job summary ("true"/"false").
+    required: false
+    default: "true"
+outputs:
+  score:
+    description: Harness score (0-100) of the root harness.
+    value: ${{ steps.score.outputs.score }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Build gearness
+      shell: bash
+      run: cd "${{ github.action_path }}" && npm ci --silent && npm run build --silent
+    - name: Lint harness
+      shell: bash
+      run: node "${{ github.action_path }}/dist/cli.js" lint --format github --cwd "${{ inputs.working-directory }}"
+    - name: SARIF report
+      if: always() && inputs.sarif == 'true'
+      shell: bash
+      run: node "${{ github.action_path }}/dist/cli.js" lint --format sarif --cwd "${{ inputs.working-directory }}" > gearness.sarif || true
+    - name: Harness report
+      if: always() && inputs.summary == 'true'
+      shell: bash
+      run: node "${{ github.action_path }}/dist/cli.js" doctor --markdown --cwd "${{ inputs.working-directory }}" >> "$GITHUB_STEP_SUMMARY"
+    - name: PR comment
+      if: always() && inputs.comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        BASE_REF: ${{ github.base_ref }}
+        WD: ${{ inputs.working-directory }}
+      run: |
+        marker="<!-- gearness-report -->"
+        report="$(node "${{ github.action_path }}/dist/cli.js" doctor --markdown --cwd "$WD" --base "origin/$BASE_REF" 2>/dev/null || node "${{ github.action_path }}/dist/cli.js" doctor --markdown --cwd "$WD")"
+        body="$marker"$'\n'"$report"
+        id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)"
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" > /dev/null
+        else
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -f body="$body" > /dev/null
+        fi
+    - id: score
+      name: Harness score gate
+      shell: bash
+      env:
+        MIN_SCORE: ${{ inputs.min-score }}
+      run: |
+        node "${{ github.action_path }}/dist/cli.js" doctor --json --cwd "${{ inputs.working-directory }}" > "$RUNNER_TEMP/gearness.json" || true
+        echo "score=$(node -e "console.log(require(process.argv[1]).score)" "$RUNNER_TEMP/gearness.json")" >> "$GITHUB_OUTPUT"
+        args=(doctor --ci --cwd "${{ inputs.working-directory }}")
+        if [ -n "$MIN_SCORE" ]; then args+=(--min-score "$MIN_SCORE"); fi
+        node "${{ github.action_path }}/dist/cli.js" "${args[@]}"

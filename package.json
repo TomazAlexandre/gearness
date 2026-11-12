@@ -1,0 +1,69 @@
+{
+  "name": "gearness",
+  "version": "0.1.0",
+  "description": "Harness engineering as code: scaffold, lint, score, evaluate and evolve the harness that keeps AI coding agents reliable in your repository.",
+  "keywords": [
+    "agents-md",
+    "ai-agents",
+    "architecture",
+    "claude-code",
+    "cline",
+    "codex",
+    "context-engineering",
+    "copilot",
+    "cursor",
+    "evals",
+    "gemini",
+    "harness-engineering",
+    "linter",
+    "monorepo",
+    "windsurf"
+  ],
+  "homepage": "https://github.com/TomazAlexandre/gearness#readme",
+  "bugs": {
+    "url": "https://github.com/TomazAlexandre/gearness/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomazAlexandre/gearness.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Tomaz Alexandre",
+    "url": "https://github.com/TomazAlexandre"
+  },
+  "type": "module",
+  "bin": {
+    "gearness": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/test",
+    "schema"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node scripts/run-tests.mjs",
+    "docs:rules": "npm run build && node scripts/gen-rules-doc.mjs",
+    "harness": "node dist/cli.js doctor",
+    "demo": "npm run build && bash scripts/demo.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@types/node": "^20.14.0",
+    "ajv": "^8.20.0",
+    "typescript": "^5.5.4"
+  }
+}

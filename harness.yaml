@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=./schema/harness.schema.json
+# harness.yaml - declarative description of this repository's agent harness.
+# Managed by gearness (https://github.com/TomazAlexandre/gearness). Docs: https://github.com/TomazAlexandre/gearness/blob/main/docs/configuration.md
+version: 1
+project:
+  name: gearness
+  description: "gearness is an open-source CLI that treats the harness around AI coding agents as code: it scaffolds AGENTS.md and context docs, lints them, scores them 0–100, keeps agent-specific files (CLAUDE.md, Cursor, Copilot) in sync, and records agent failures as durable guardrails (the ratchet). Must never break: `init` never destroys user content; `lint`/`doctor` exit codes are a public contract used by CI."
+stack: node
+commands:
+  install: npm ci
+  build: npm run build
+  typecheck: npm run typecheck
+  test: npm run test
+context:
+  entry: AGENTS.md
+  docs:
+    - docs/ARCHITECTURE.md
+    - docs/CONVENTIONS.md
+  status: docs/STATUS.md
+  maxEntryLines: 150
+  maxEntryTokens: 2500
+agents:
+  - claude
+  - cursor
+  - copilot
+  - codex
+gates:
+  minScore: 70
+rules:
+  disable: []
+boundaries:
+  - from: "src/**"
+    deny: ["src/cli"]
+    message: only cli.ts prints and sets exit codes; library modules return data
+  - from: "src/rules.ts"
+    deny: ["src/init", "src/eval"]
+    message: rules are read-only checks and must not depend on commands that write files
+eval:
+  agent: claude
+  tasks: .harness/evals
+  timeoutSeconds: 1200
+

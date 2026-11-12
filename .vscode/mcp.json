@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "gearness": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "mcp"
+      ]
+    }
+  }
+}

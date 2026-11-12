@@ -1,0 +1,21 @@
+# A realistic contribution: does the harness lead an agent to follow docs/CONVENTIONS.md ("New stack")?
+id: add-ruby-stack
+prompt: |
+  Add Ruby support to stack detection: a repository with a Gemfile should be detected as stack "ruby",
+  with `bundle exec rspec` as the test command and `bundle exec rubocop` as the lint command.
+  Include tests.
+setup: npm ci
+check: |
+  npm test && node -e "
+  const fs = require('fs'), os = require('os'), path = require('path');
+  import('./dist/detect.js').then(({ detect }) => {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'rb-'));
+    fs.writeFileSync(path.join(d, 'Gemfile'), 'source \"https://rubygems.org\"\n');
+    const r = detect(d);
+    process.exit(r.stack === 'ruby' && /rspec/.test(r.commands.test || '') ? 0 : 1);
+  });"
+forbid:
+  - "AGENTS.md"
+  - ".harness/ratchet.yaml"
+  - "package-lock.json"
+timeoutSeconds: 1200

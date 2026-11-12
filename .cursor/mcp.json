@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gearness": {
+      "command": "node",
+      "args": [
+        "dist/cli.js",
+        "mcp"
+      ]
+    }
+  }
+}

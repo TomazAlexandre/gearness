@@ -1,0 +1,9 @@
+# Ratchet log: every agent failure that should never happen again becomes a durable artifact
+# (a lint rule, a test, a hook, a CI gate or a documented rule). Add entries with `gearness ratchet add`.
+entries:
+  - id: R-001
+    date: 2026-11-12
+    failure: ratchet add accepted a mechanical fix whose artifact did not exist, recording a guardrail that was never built
+    fix: test
+    artifact: src/test/gearness.test.ts
+    note: found while building v0.1.0; covered by 'mechanical fixes require an existing artifact'

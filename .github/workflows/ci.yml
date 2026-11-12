@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [18, 20, 22]
+        exclude:
+          # Keep the matrix lean: full Node range on Linux, current LTS elsewhere.
+          - { os: windows-latest, node: 18 }
+          - { os: windows-latest, node: 22 }
+          - { os: macos-latest, node: 18 }
+          - { os: macos-latest, node: 22 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: git config --global user.name ci && git config --global user.email ci@example.com
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      # Dogfooding: gearness gates its own harness.
+      - run: node dist/cli.js lint --format github
+      - run: node dist/cli.js doctor --ci
+      - name: Harness report
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.node == 20
+        shell: bash
+        run: node dist/cli.js doctor --markdown >> "$GITHUB_STEP_SUMMARY"

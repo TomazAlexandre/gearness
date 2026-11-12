@@ -1,0 +1,45 @@
+# Conventional commits on main → release-please opens a release PR (version bump + CHANGELOG).
+# Merging it tags the release, publishes to npm with provenance and moves the floating v0 tag
+# used by `uses: TomazAlexandre/gearness@v0` and `npx gearness@0`.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.rp.outputs.release_created }}
+      major: ${{ steps.rp.outputs.major }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: node
+
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm test
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Move floating major tag
+        run: |
+          git tag -f "v${{ needs.release-please.outputs.major }}"
+          git push -f origin "v${{ needs.release-please.outputs.major }}"
