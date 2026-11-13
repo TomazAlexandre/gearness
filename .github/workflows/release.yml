@@ -1,4 +1,6 @@
 # Conventional commits on main → release-please opens a release PR (version bump + CHANGELOG).
+# Publishing uses npm trusted publishing (OIDC): no npm token is stored anywhere. npm verifies that the publish comes
+# from this repository and this workflow file (configured once on npmjs.com → package settings → Trusted publishing).
 # Versions come from .release-please-manifest.json + release-please-config.json (0.x line: feat → minor).
 # Merging it tags the release, publishes to npm with provenance and moves the floating v0 tag
 # used by `uses: TomazAlexandre/gearness@v0` and `npx gearness@0`.
@@ -35,9 +37,9 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm test
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Trusted publishing needs npm >= 11.5.1; pin the npm 11 line explicitly. Provenance is attached automatically.
+      - run: npm install -g npm@11
+      - run: npm publish --access public
       - name: Move floating major tag
         run: |
           git tag -f "v${{ needs.release-please.outputs.major }}"

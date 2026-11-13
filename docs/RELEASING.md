@@ -9,8 +9,10 @@ Releases are automated with release-please and published to npm with provenance.
 3. Merging that PR tags the release, publishes `gearness` to npm and moves the floating major tag (`v0`) used by
    `uses: TomazAlexandre/gearness@v0` and `npx gearness@0`.
 
-Requirements: the repository secret `NPM_TOKEN` (an npm automation token) and, under **Settings → Actions → General**,
-"Allow GitHub Actions to create and approve pull requests".
+Requirements:
+- npm **trusted publishing** configured for the package (npmjs.com → `gearness` → Settings → Trusted publishing →
+  GitHub Actions, repository `TomazAlexandre/gearness`, workflow `release.yml`). No npm token is stored in GitHub.
+- Under **Settings → Actions → General**, "Allow GitHub Actions to create and approve pull requests".
 
 Before merging a release PR, run locally:
 
