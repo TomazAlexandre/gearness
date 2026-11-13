@@ -1,6 +1,6 @@
 {
   "name": "gearness",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Harness engineering as code: scaffold, lint, score, evaluate and evolve the harness that keeps AI coding agents reliable in your repository.",
   "keywords": [
     "agents-md",

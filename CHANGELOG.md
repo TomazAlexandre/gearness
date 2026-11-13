@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2026-11-13)
+
+
+### Features
+
+* initial release ([47c8726](https://github.com/TomazAlexandre/gearness/commit/47c8726996ecfbe2ed6ae9063423d1b13b07c966))
+
 ## 0.1.0
 
 First public release.
