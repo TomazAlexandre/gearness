@@ -9,6 +9,8 @@
 
 *Gear* for your agents' *harness*. 🇧🇷 [Leia em português](README.pt-BR.md)
 
+![gearness demo: init, architecture inference, Claude Code hook catching a layer violation, learned rule, score](https://raw.githubusercontent.com/TomazAlexandre/gearness/main/docs/demo.gif)
+
 ```text
 $ npx gearness init && npx gearness doctor
 
@@ -284,8 +286,10 @@ gates:
 
 ## See it in 60 seconds
 
+The GIF at the top is this script, recorded as is:
+
 ```bash
-npm run build && bash scripts/demo.sh
+npm run demo
 ```
 
 The demo creates a small layered app, infers and freezes its architecture, installs the Claude Code hook, simulates an

@@ -8,6 +8,8 @@
 
 🇺🇸 [Read in English](README.md)
 
+![demo do gearness](https://raw.githubusercontent.com/TomazAlexandre/gearness/main/docs/demo.gif)
+
 ## Por quê
 
 `Agente = Modelo + Harness`. O modelo é o mesmo para todo mundo; o harness - instruções, documentação, checagens,

@@ -308,6 +308,21 @@ describe("mcp rules for path", () => {
   });
 });
 
+describe("colors", () => {
+  it("FORCE_COLOR turns colors on for pipes, NO_COLOR wins", () => {
+    const dir = tmpRepo({ "package.json": NODE_PKG });
+    init(dir);
+    const env = { ...TEST_ENV };
+    delete env.NO_COLOR;
+    const forced = spawnSync("node", [CLI, "doctor", "--cwd", dir], { env: { ...env, FORCE_COLOR: "1" } }).stdout.toString();
+    assert.match(forced, /\x1b\[/);
+    const plain = spawnSync("node", [CLI, "doctor", "--cwd", dir], { env }).stdout.toString();
+    assert.doesNotMatch(plain, /\x1b\[/);
+    const both = spawnSync("node", [CLI, "doctor", "--cwd", dir], { env: { ...env, FORCE_COLOR: "1", NO_COLOR: "1" } }).stdout.toString();
+    assert.doesNotMatch(both, /\x1b\[/);
+  });
+});
+
 describe("init extras", () => {
   it("writes .harness/.gitignore for local data", () => {
     const dir = tmpRepo({ "package.json": NODE_PKG });

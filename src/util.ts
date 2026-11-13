@@ -95,7 +95,9 @@ export function headingAnchors(md: string): Set<string> {
 export const isExternal = (t: string): boolean =>
   /^[a-z][a-z0-9+.-]*:/i.test(t) || t.startsWith("#") || t.startsWith("//");
 
-const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
+// NO_COLOR (https://no-color.org) wins; FORCE_COLOR turns colors on for pipes and CI logs.
+const forced = !!process.env.FORCE_COLOR && process.env.FORCE_COLOR !== "0" && process.env.FORCE_COLOR !== "false";
+const useColor = !process.env.NO_COLOR && (process.stdout.isTTY || forced);
 const wrap = (code: number) => (s: string) => (useColor ? `\x1b[${code}m${s}\x1b[0m` : s);
 export const color = {
   red: wrap(31),
