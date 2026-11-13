@@ -4,6 +4,7 @@
     ".": {
       "release-type": "node",
       "package-name": "gearness",
+      "include-component-in-tag": false,
       "bump-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md"
     }
