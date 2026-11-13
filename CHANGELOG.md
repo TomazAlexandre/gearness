@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/TomazAlexandre/gearness/compare/v0.1.1...v0.2.0) (2026-11-13)
+
+
+### Features
+
+* add demo GIF and FORCE_COLOR support ([40b69ee](https://github.com/TomazAlexandre/gearness/commit/40b69eeaf019dc5f747c3933c5c46db20b78c46a))
+
 ## [0.1.1](https://github.com/TomazAlexandre/gearness/compare/v0.1.0...v0.1.1) (2026-11-13)
 
 
