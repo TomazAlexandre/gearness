@@ -36,8 +36,9 @@ export async function compareWithBase(cwd: string, ref: string, current: Workspa
   } catch {
     throw new Error(`unknown git ref "${ref}" (in CI, check out with fetch-depth: 0)`);
   }
-  const top = git(cwd, ["rev-parse", "--show-toplevel"]);
-  const rel = path.relative(fs.realpathSync(top), fs.realpathSync(cwd));
+  // Ask git where cwd sits inside the repository instead of comparing path strings: on Windows the same folder
+  // can be spelled two ways (8.3 short names like RUNNER~1, drive letter case), which breaks path.relative.
+  const rel = git(cwd, ["rev-parse", "--show-prefix"]).replace(/\/$/, "");
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gearness-base-"));
   const wt = path.join(tmp, "wt");
   git(cwd, ["worktree", "add", "--detach", wt, ref]);

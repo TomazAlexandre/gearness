@@ -18,7 +18,7 @@ import { handle } from "../mcp.js";
 import { RULES } from "../rules.js";
 import { evaluate } from "../score.js";
 import { listFiles, parseJsonc } from "../util.js";
-import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT } from "./helpers.js";
+import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT, TEST_ENV } from "./helpers.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "cli.js");
@@ -32,7 +32,7 @@ const commitAll = (dir: string) => {
 };
 const hits = (dir: string, rule: string) => evaluate(dir, loadConfig(dir).config!).diagnostics.filter((d) => d.rule === rule);
 const cli = (dir: string, args: string[], input?: string) => {
-  const r = spawnSync("node", [CLI, ...args, "--cwd", dir], { input, env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync("node", [CLI, ...args, "--cwd", dir], { input, env: TEST_ENV });
   return { code: r.status, out: r.stdout.toString(), err: r.stderr.toString() };
 };
 const withBoundary = (dir: string, from = "src/ui/**", deny = "src/db/**") =>

@@ -10,7 +10,7 @@ import { detect } from "../detect.js";
 import { init } from "../init.js";
 import { addEntry, loadRatchet } from "../ratchet.js";
 import { evaluate } from "../score.js";
-import { NODE_PKG, read, tmpRepo, write } from "./helpers.js";
+import { NODE_PKG, read, tmpRepo, write, TEST_ENV } from "./helpers.js";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "cli.js");
 const ids = (dir: string) => {
@@ -174,7 +174,7 @@ describe("adapters", () => {
 describe("cli", () => {
   const run = (dir: string, ...args: string[]) => {
     try {
-      return { code: 0, out: execFileSync("node", [CLI, ...args, "--cwd", dir], { env: { ...process.env, NO_COLOR: "1" } }).toString() };
+      return { code: 0, out: execFileSync("node", [CLI, ...args, "--cwd", dir], { env: TEST_ENV, stdio: "pipe" }).toString() };
     } catch (e) {
       const err = e as { status: number; stdout: Buffer };
       return { code: err.status, out: err.stdout.toString() };

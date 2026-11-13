@@ -15,7 +15,7 @@ import { applyLessons, findLessons, loadEvents, recordEvents, TELEMETRY_FILE } f
 import { evaluate, evaluateTree } from "../score.js";
 import { renameResolver } from "../util.js";
 import { xray } from "../xray.js";
-import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT } from "./helpers.js";
+import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT, TEST_ENV } from "./helpers.js";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "cli.js");
 const git = (dir: string, ...a: string[]) =>
@@ -26,7 +26,7 @@ const commit = (dir: string, msg = "c") => {
   git(dir, "commit", "-qm", msg, "--allow-empty");
 };
 const cli = (dir: string, ...args: string[]) => {
-  const r = spawnSync("node", [CLI, ...args, "--cwd", dir], { env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync("node", [CLI, ...args, "--cwd", dir], { env: TEST_ENV });
   return { code: r.status, out: r.stdout.toString(), err: r.stderr.toString() };
 };
 const hits = (dir: string, rule: string) => evaluate(dir, loadConfig(dir).config!).diagnostics.filter((d) => d.rule === rule);
@@ -112,6 +112,20 @@ describe("regression gate", () => {
     assert.equal(cmp.resolved.length, 0);
     assert.equal(cli(dir, "doctor", "--ci", "--no-regress", "--base", "HEAD").code, 1);
     assert.equal(execFileSync("git", ["worktree", "list"], { cwd: dir }).toString().trim().split("\n").length, 1);
+  });
+  it("compares from a workspace subdirectory, whatever the path spelling", NEEDS_GIT, async () => {
+    const dir = tmpRepo({ "package.json": JSON.stringify({ name: "m", workspaces: ["packages/*"] }), "packages/a/package.json": NODE_PKG });
+    init(dir, { workspaces: true });
+    commit(dir);
+    const ws = path.join(dir, "packages", "a");
+    write(ws, "AGENTS.md", read(ws, "AGENTS.md") + "\n[x](missing.md)\n");
+    const { sync } = await import("../adapters.js");
+    sync(ws, loadConfig(ws).config!);
+    // A differently spelled but equivalent path (trailing separator, ".." segment) must resolve to the same place.
+    const odd = path.join(dir, "packages", "a", "..", "a") + path.sep;
+    const cmp = await compareWithBase(odd, "HEAD", await evaluateTree(ws, loadConfig(ws).config!));
+    assert.ok(cmp.baseScore !== null, "base harness found in the workspace");
+    assert.ok(cmp.delta! < 0);
   });
   it("treats a base without a harness as a new harness", NEEDS_GIT, async () => {
     const dir = tmpRepo({ "package.json": NODE_PKG });
@@ -274,7 +288,7 @@ describe("learning loop", () => {
     const dir = tmpRepo({ "package.json": NODE_PKG, "src/ui/a.ts": 'import "../db/x";\n' });
     init(dir);
     write(dir, "harness.yaml", read(dir, "harness.yaml").replace("boundaries: []", 'boundaries:\n  - from: "src/ui/**"\n    deny: ["src/db/**"]'));
-    for (let i = 0; i < 2; i++) spawnSync("node", [CLI, "check", "--hook", "claude"], { input: JSON.stringify({ cwd: dir, tool_input: { file_path: "src/ui/a.ts" } }) });
+    for (let i = 0; i < 2; i++) spawnSync("node", [CLI, "check", "--hook", "claude"], { input: JSON.stringify({ cwd: dir, tool_input: { file_path: "src/ui/a.ts" } }), env: TEST_ENV });
     const r = cli(dir, "learn");
     assert.match(r.out, /2× imports from src\/db inside src\/ui/);
   });

@@ -13,7 +13,7 @@ import { init } from "../init.js";
 import { loadExtraRules } from "../plugins.js";
 import { evaluate, evaluateTree } from "../score.js";
 import { expandDirGlobs, headingAnchors, markdownLinks, matchesGlob } from "../util.js";
-import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT } from "./helpers.js";
+import { NODE_PKG, read, tmpRepo, write, NEEDS_GIT, TEST_ENV } from "./helpers.js";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "cli.js");
 const rulesHit = (dir: string, rule: string) => {
@@ -247,7 +247,7 @@ describe("eval", () => {
   });
   it("cli eval --min-pass-rate gates CI", NEEDS_GIT, () => {
     const { dir } = setup();
-    const r = spawnSync("node", [CLI, "eval", "--agent", "node agent.cjs", "--task", "do-it", "--min-pass-rate", "1", "--json", "--cwd", dir]);
+    const r = spawnSync("node", [CLI, "eval", "--agent", "node agent.cjs", "--task", "do-it", "--min-pass-rate", "1", "--json", "--cwd", dir], { env: TEST_ENV });
     assert.equal(r.status, 1);
     assert.equal(JSON.parse(r.stdout.toString()).variants[0].passRate, 0);
   });
@@ -257,15 +257,15 @@ describe("cli extras", () => {
   it("badge and markdown report", () => {
     const dir = tmpRepo({ "package.json": NODE_PKG });
     init(dir);
-    const env = { ...process.env, NO_COLOR: "1" };
-    assert.match(execFileSync("node", [CLI, "badge", "--cwd", dir], { env }).toString(), /img\.shields\.io\/badge\/harness-\d+%2F100/);
-    assert.match(execFileSync("node", [CLI, "doctor", "--markdown", "--cwd", dir], { env }).toString(), /^## .* Harness score: \d+\/100/);
+    const env = TEST_ENV;
+    assert.match(execFileSync("node", [CLI, "badge", "--cwd", dir], { env, stdio: "pipe" }).toString(), /img\.shields\.io\/badge\/harness-\d+%2F100/);
+    assert.match(execFileSync("node", [CLI, "doctor", "--markdown", "--cwd", dir], { env, stdio: "pipe" }).toString(), /^## .* Harness score: \d+\/100/);
   });
   it("lint --fix syncs adapters inside workspaces too", () => {
     const dir = tmpRepo({ "package.json": JSON.stringify({ name: "m", workspaces: ["packages/*"] }), "packages/a/package.json": NODE_PKG });
     init(dir, { workspaces: true });
     write(dir, "packages/a/AGENTS.md", read(dir, "packages/a/AGENTS.md") + "\nnew rule\n");
-    const out = spawnSync("node", [CLI, "lint", "--fix", "--cwd", dir], { env: { ...process.env, NO_COLOR: "1" } }).stdout.toString();
+    const out = spawnSync("node", [CLI, "lint", "--fix", "--cwd", dir], { env: TEST_ENV }).stdout.toString();
     assert.match(out, /regenerated packages\/a\/\.cursor\/rules\/gearness\.mdc/);
     const { config } = loadConfig(path.join(dir, "packages/a"));
     assert.ok(sync(path.join(dir, "packages/a"), config!).every((r) => r.action !== "written"));

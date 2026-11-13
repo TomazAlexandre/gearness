@@ -22,3 +22,10 @@ export const NODE_PKG = JSON.stringify({ name: "demo-app", scripts: { build: "ts
 
 /** Options for tests that need the git executable: skipped with a clear reason when it is missing. */
 export const NEEDS_GIT = { skip: hasGit() ? false : "git not found in PATH (install it to run this test)" };
+
+/** Environment for CLI subprocesses in tests: no colors, and FORCE_COLOR (set by some terminals) removed. */
+export const TEST_ENV = (() => {
+  const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };
+  delete env.FORCE_COLOR;
+  return env;
+})();
