@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/TomazAlexandre/gearness/compare/v0.1.0...v0.1.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* resolve repository subfolder via git in --base comparisons ([c20bb8b](https://github.com/TomazAlexandre/gearness/commit/c20bb8bbe67620e8d37dc6bf6d42588a24febb7c))
+
 ## 0.1.0
 
 First public release.
