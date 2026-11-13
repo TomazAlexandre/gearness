@@ -236,7 +236,7 @@ knowledge isn't yet. See [docs/rules.md](docs/rules.md) for every rule and [docs
 `init` adds `.github/workflows/gearness.yml`. Or use the action directly:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 - uses: TomazAlexandre/gearness@v0
   with:
     min-score: 80   # optional, overrides gates.minScore

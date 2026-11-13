@@ -177,12 +177,12 @@ jobs:
   harness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
       - name: Lint harness (inline PR annotations)
         run: npx --yes ${PACKAGE}@0 lint --format github
       - name: Harness score gate

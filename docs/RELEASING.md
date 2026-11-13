@@ -1,6 +1,8 @@
 # Releasing
 
-Releases are automated with release-please and published to npm with provenance.
+Releases are automated with release-please and published to npm with provenance. The current version lives in
+`.release-please-manifest.json`; `release-please-config.json` keeps the project on the 0.x line until a deliberate
+1.0 (`feat:` bumps the minor version, `fix:` the patch).
 
 1. Merge pull requests into `main` using Conventional Commit titles (`feat:`, `fix:`, `docs:`…).
 2. release-please opens (and keeps updating) a release PR with the version bump and CHANGELOG.

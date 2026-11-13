@@ -49,10 +49,10 @@ jobs:
   eval:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+      - uses: actions/setup-node@v7
+        with: { node-version: 24 }
       - run: npm install -g @anthropic-ai/claude-code
       - run: npx --yes gearness@0 eval --runs 3 --parallel 3 --min-pass-rate 0.7
         env:

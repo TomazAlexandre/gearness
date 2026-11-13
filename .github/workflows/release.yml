@@ -1,4 +1,5 @@
 # Conventional commits on main → release-please opens a release PR (version bump + CHANGELOG).
+# Versions come from .release-please-manifest.json + release-please-config.json (0.x line: feat → minor).
 # Merging it tags the release, publishes to npm with provenance and moves the floating v0 tag
 # used by `uses: TomazAlexandre/gearness@v0` and `npx gearness@0`.
 name: release
@@ -20,19 +21,17 @@ jobs:
       major: ${{ steps.rp.outputs.major }}
     steps:
       - id: rp
-        uses: googleapis/release-please-action@v4
-        with:
-          release-type: node
+        uses: googleapis/release-please-action@v5
 
   publish:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm test

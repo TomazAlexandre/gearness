@@ -35,9 +35,9 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
-        node-version: 20
+        node-version: 24
     - name: Build gearness
       shell: bash
       run: cd "${{ github.action_path }}" && npm ci --silent && npm run build --silent
