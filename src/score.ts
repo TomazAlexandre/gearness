@@ -13,9 +13,26 @@ export interface RuleResult {
   earned: number;
 }
 
+/**
+ * Highest score a project can reach while its entry file is missing. Rules that examine the entry file's content
+ * (placeholders, links, size, secrets, adapters...) have nothing to flag when there is no file, and "nothing to flag"
+ * used to earn full marks: a project with only a harness.yaml scored 82 (grade B). Without the entry file there is
+ * no harness, so the score cannot leave the F band, however many rules pass vacuously.
+ */
+export const NO_ENTRY_CAP = 39;
+
+export interface ScoreCap {
+  max: number;
+  reason: string;
+  /** What the score would have been without the cap, so the cap is never a hidden adjustment. */
+  uncapped: number;
+}
+
 export interface Report {
   score: number;
   grade: string;
+  /** Present when the score was limited (see NO_ENTRY_CAP). */
+  cap?: ScoreCap;
   pillars: Partial<Record<Pillar, { earned: number; total: number }>>;
   results: RuleResult[];
   diagnostics: Diagnostic[];
@@ -44,11 +61,15 @@ export function evaluate(cwd: string, config: HarnessConfig, now = new Date(), e
     earned += r.earned;
     total += r.rule.weight;
   }
-  const score = total ? Math.round((earned / total) * 100) : 0;
+  const raw = total ? Math.round((earned / total) * 100) : 0;
+  const entry = results.find((r) => r.rule.id === "context/entry-exists");
+  const cap: ScoreCap | undefined = entry && entry.earned === 0 && raw > NO_ENTRY_CAP ? { max: NO_ENTRY_CAP, reason: `entry file ${config.context.entry} not found`, uncapped: raw } : undefined;
+  const score = cap ? cap.max : raw;
   const diagnostics = results.flatMap((r) => r.diagnostics);
   return {
     score,
     grade: gradeOf(score),
+    ...(cap ? { cap } : {}),
     pillars,
     results,
     diagnostics,
