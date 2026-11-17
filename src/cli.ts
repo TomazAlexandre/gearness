@@ -218,7 +218,9 @@ function topGaps(r: Report, n = 5) {
 
 function printReport(cwd: string, config: HarnessConfig, r: Report): void {
   const paint = r.score >= 75 ? c.green : r.score >= 50 ? c.yellow : c.red;
-  console.log(`\n  ${c.bold("Harness score")}  ${paint(c.bold(`${r.score}/100`))}  grade ${paint(r.grade)}   ${c.gray(`(${config.project.name})`)}\n`);
+  console.log(`\n  ${c.bold("Harness score")}  ${paint(c.bold(`${r.score}/100`))}  grade ${paint(r.grade)}   ${c.gray(`(${config.project.name})`)}`);
+  if (r.cap) console.log(`  ${c.yellow(`capped at ${r.cap.max}: ${r.cap.reason} (would be ${r.cap.uncapped} without the cap)`)}`);
+  console.log("");
   for (const [p, v] of pillarEntries(r)) {
     const ratio = v!.total ? v!.earned / v!.total : 1;
     console.log(`  ${(PILLAR_LABEL[p] ?? p).padEnd(14)} ${bar(ratio)} ${String(Math.round(ratio * 100)).padStart(3)}%`);
@@ -241,6 +243,7 @@ function markdownReport(tree: WorkspaceReport[], cmp?: Comparison): string {
   const root = tree[0].report!;
   const emoji = (s: number) => (s >= 75 ? "🟢" : s >= 50 ? "🟡" : "🔴");
   const lines = [`## ${emoji(root.score)} Harness score: ${root.score}/100 (${root.grade})`, ""];
+  if (root.cap) lines.push(`> Capped at ${root.cap.max}: ${root.cap.reason} (would be ${root.cap.uncapped} without the cap).`, "");
   if (cmp) {
     const d = cmp.delta === null ? "new harness" : cmp.delta > 0 ? `**+${cmp.delta}** ⬆️` : cmp.delta < 0 ? `**${cmp.delta}** ⬇️` : "±0";
     lines.push(`Compared with \`${cmp.ref}\`: ${cmp.baseScore ?? "-"} → ${cmp.score} (${d}) · ${cmp.introduced.length} new finding(s) · ${cmp.resolved.length} resolved`, "");
