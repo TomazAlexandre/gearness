@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/TomazAlexandre/gearness/compare/v0.4.0...v0.5.0) (2026-11-17)
+
+
+### Features
+
+* **study:** volunteer mode to replicate the study on any repository ([cc4200f](https://github.com/TomazAlexandre/gearness/commit/cc4200ff80651bd6fb3ae1111ac75d59555c9262))
+
+
+### Bug Fixes
+
+* **mcp:** declare all four tool hints explicitly ([85dc2e1](https://github.com/TomazAlexandre/gearness/commit/85dc2e121cae13339d53406fea9f1aa961369a45))
+
 ## [0.4.0](https://github.com/TomazAlexandre/gearness/compare/v0.3.0...v0.4.0) (2026-11-17)
 
 
