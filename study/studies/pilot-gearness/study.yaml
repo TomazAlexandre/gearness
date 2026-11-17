@@ -1,0 +1,26 @@
+# PILOT. Its only job is to find infrastructure problems and estimate cost before the real study.
+# Pilot numbers are never reported as findings and never pooled with a study (see PROTOCOL.md §3).
+id: pilot-gearness
+agent: node {runner}/agent.mjs --prompt-env GEARNESS_PROMPT   # Claude Code headless, records cost. Pin the model with STUDY_CLAUDE_ARGS.
+runs: 3
+parallel: 3
+seed: 20261116
+protocol: ../../PROTOCOL.md               # run.mjs refuses to measure while this file has uncommitted changes
+
+target:
+  path: ../../..                          # this repository
+  commit: HEAD                            # recorded as a sha in the manifest
+  exclude: [study]                        # the study kit itself must not be visible to the agent
+
+tasks: tasks
+hidden: hidden
+reference: reference
+
+conditions:
+  none: {}                                # everything that instructs an agent is stripped
+  minimal:
+    overlay: conditions/minimal           # one entry file: how to run the tests
+  full:
+    strip: false                          # keep gearness's own harness (it dogfoods itself)
+  # bloated: not part of the pilot. For the real study, generate it once with the agent's init command,
+  # commit the output under conditions/bloated, and add `bloated: {overlay: conditions/bloated}`.

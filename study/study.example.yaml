@@ -1,0 +1,23 @@
+# Template for a new study. Copy to study/studies/<your-id>/study.yaml. Paths are relative to this file.
+id: my-study                              # kebab-case; a re-run of anything gets a NEW id
+agent: node {runner}/agent.mjs --prompt-env GEARNESS_PROMPT   # or a gearness preset (claude, codex...) or any command with {prompt}
+runs: 5                                   # rounds; PROTOCOL.md asks for at least 5
+parallel: 3                               # tasks run at once inside a round
+seed: 1                                   # fixes the shuffle of conditions and the bootstrap
+timeoutSeconds: 900                       # per run, same for every condition
+protocol: ../../PROTOCOL.md               # optional but recommended: enforces "freeze before measuring"
+
+target:
+  repo: https://github.com/owner/project  # or `path: ../some/local/clone`
+  commit: 0123456789abcdef                # the parent of the first PR you took a task from; pin a sha
+  exclude: []                             # paths to delete from the trial repo (e.g. the study kit itself)
+
+tasks: tasks                              # *.yaml in gearness eval format; may use {{HIDDEN}}
+hidden: hidden                            # hidden checks. {{HIDDEN}} in a task becomes this absolute path
+reference: reference                      # reference/<task-id>.patch: the solution validate.mjs applies
+
+conditions:
+  none: {}
+  minimal: {overlay: conditions/minimal}
+  bloated: {overlay: conditions/bloated}
+  full: {overlay: conditions/full}

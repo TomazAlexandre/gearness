@@ -3,3 +3,4 @@ dist/
 *.log
 .DS_Store
 .harness/eval-results/
+study/studies/*/.work/
