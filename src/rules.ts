@@ -82,6 +82,9 @@ export const SECRET_PATTERNS: [string, RegExp][] = [
 const COMMAND_START = /^(npm|pnpm|yarn|npx|bun|deno|make|just|task|cargo|go|pytest|python3?|pip|uv|poetry|mvn|gradle|\.\/gradlew|dotnet|bundle|rake|composer|php|docker|git)\s/;
 const RULE_WORDS = /\b(never|always|must|must not|do not|don't|avoid|prefer|forbidden|required|only)\b/i;
 
+/** Signs of real project knowledge (out of 5) an entry file needs before context/placeholders gives it full credit. */
+export const MIN_SUBSTANCE = 3;
+
 export interface SubstanceSignal {
   id: string;
   ok: boolean;
@@ -280,8 +283,8 @@ export const RULES: Rule[] = [
     pillar: "context",
     weight: 30,
     severity: "warn",
-    description: `Scaffolded ${PLACEHOLDER} markers are replaced with real project knowledge. Structure without content is not a harness.`,
-    check: ({ config, read }) => {
+    description: `Scaffolded ${PLACEHOLDER} markers are replaced with real project knowledge, and the entry file shows at least ${MIN_SUBSTANCE} of the 5 signs of it (see context/entry-substance). Structure without content is not a harness, and neither is a file with nothing left to fill in.`,
+    check: ({ config, read, exists }) => {
       const out: Finding[] = [];
       for (const file of contextFiles(config)) {
         const text = read(file);
@@ -290,12 +293,23 @@ export const RULES: Rule[] = [
         if (hits.length)
           out.push({ message: `${hits.length} unfilled ${PLACEHOLDER} marker(s)`, file, line: lineOf(text, hits[0]), hint: "replace with concrete facts about this codebase - this is where most of the value is" });
       }
+      const entry = read(config.context.entry);
+      if (entry !== null && !placeholderHits(entry).length) {
+        const ok = substanceSignals(entry, exists).filter((x) => x.ok).length;
+        if (ok < MIN_SUBSTANCE)
+          out.push({ message: `no ${PLACEHOLDER} markers left, but the entry file shows only ${ok} of 5 signs of real project knowledge: removing the markers is not the same as filling them in`, file: config.context.entry, hint: "see context/entry-substance for the signs that are missing" });
+      }
       return out;
     },
-    // Each remaining marker costs a share of the points; ~6 left means no credit.
-    credit: ({ config, read }) => {
+    // Each remaining marker costs a share of the points; ~6 left means no credit. An entry file with fewer than
+    // MIN_SUBSTANCE signs of real content earns only that fraction of the points, so an empty file cannot score as filled in.
+    credit: ({ config, read, exists }) => {
       const total = contextFiles(config).reduce((n, f) => n + placeholderHits(read(f) ?? "").length, 0);
-      return Math.max(0, 1 - total / 6);
+      const base = Math.max(0, 1 - total / 6);
+      const entry = read(config.context.entry);
+      if (entry === null) return base; // a missing entry file is the score cap's job
+      const ok = substanceSignals(entry, exists).filter((x) => x.ok).length;
+      return Math.min(base, Math.min(1, ok / MIN_SUBSTANCE));
     },
   },
   {
