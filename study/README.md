@@ -1,7 +1,7 @@
 # gearness study kit
 
 Reproducible measurement of one question: **does the harness make an agent fail less?**
-Read [PROTOCOL.md](PROTOCOL.md) first. It fixes hypotheses, conditions, metrics and analysis *before* any number exists.
+Read [PROTOCOL.md](PROTOCOL.md) first. To replicate it on your own repository with no authoring, read [VOLUNTEER.md](VOLUNTEER.md). It fixes hypotheses, conditions, metrics and analysis *before* any number exists.
 
 The kit sits on top of `gearness eval`: for every round and every condition it builds an isolated repository and calls
 `gearness eval`, then aggregates the raw results into a report.
@@ -14,6 +14,8 @@ study/
     run.mjs              run a study: rounds × conditions, interleaved
     validate.mjs         prove every task fails on base code and passes with its reference patch
     report.mjs           raw results -> Markdown report (bootstrap CIs, comparisons, sensitivity)
+    mine.mjs             volunteer mode: build studies from a repository's own git history
+    batch.mjs            validate and run every study in a folder, then one pooled report
     agent.mjs            Claude Code headless wrapper that records cost, turns and tokens
     lib.mjs, stats.mjs   trial isolation, config, statistics
     test/                tests, including an end-to-end run with a fake agent
