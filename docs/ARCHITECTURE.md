@@ -51,7 +51,7 @@ per-file context rules → exit 2 with feedback on stderr, which Claude Code sho
 
 `cli eval` → `loadTasks` → per task × variant × run: `git worktree add` at HEAD → overlay harness files
 (working tree, or `--baseline` ref) → commit → setup → agent → `git status` (forbidden files) → check → cleanup →
-summary saved to `.harness/eval-results/`.
+summary saved under `.harness` (a git-ignored eval-results folder).
 
 ## Decisions
 - Deterministic core, LLM features only as future opt-in plugins (CI-safe, no data leaves the machine).
