@@ -68,6 +68,20 @@ a harness by accident.
 **Pilot.** A pilot (a few tasks, few runs) is used only to find infrastructure problems and estimate cost. Pilot results
 are never reported as findings and never pooled with the study. A study that is re-run gets a **new study id**.
 
+## 3a. Study C: community replications
+
+Volunteers run the kit on their own repositories (`VOLUNTEER.md`). These results are labelled *community replications*,
+published as submitted and **never pooled into Study A or B**. Their rules differ on purpose:
+
+- Tasks are mined mechanically by `mine.mjs`: commits that changed source and tests together, with a bounded size, preferring
+  commits whose message describes a fix. The code is the commit's parent; the check restores the commit's tests; the
+  reference patch is its non-test diff. The volunteer may edit a prompt only to remove hints about the solution.
+- `full` is the repository's own harness at the parent commit, not one we wrote. A harness that is absent makes the repository
+  uninformative, so commits whose parent has no agent instruction file are skipped by default.
+- Tasks that fail validation are excluded and counted in the report. Volunteers cannot add or drop tasks after seeing results.
+- Volunteers may not be blind to their own harness, and we cannot audit their environment. These are replications and leads,
+  not confirmatory evidence.
+
 ## 3b. Isolation of the experiment
 
 - The repository given to the agent is the pinned commit **without git history**, so the real solution of a later commit
