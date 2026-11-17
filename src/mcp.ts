@@ -27,12 +27,20 @@ interface Tool {
 
 const obj = (properties: Record<string, unknown> = {}, required: string[] = []) => ({ type: "object", properties, required, additionalProperties: false });
 
+/**
+ * All four MCP tool hints are declared explicitly on every tool: some directories reject a tool that leaves any of them
+ * undefined. The values describe what the handler really does (see src/test/mcp-hints.test.ts, which checks it).
+ */
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
+/** Adds an entry, never removes or overwrites one; every call adds another, so it is not idempotent. Local files only. */
+const APPEND_ONLY = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
+
 export const TOOLS: Tool[] = [
   {
     name: "harness_overview",
     description: "Start here. Returns where this repository's agent instructions live, which docs to read for each area, the commands that verify work, architecture boundaries, and the current harness score with its top gaps.",
     inputSchema: obj(),
-    annotations: { readOnlyHint: true },
+    annotations: { ...READ_ONLY },
     run: async (_a, cwd, config) => {
       const tree = await evaluateTree(cwd, config);
       const r = tree[0].report!;
@@ -58,7 +66,7 @@ export const TOOLS: Tool[] = [
     name: "harness_rules_for_path",
     description: "Before editing a file, returns the instruction files that apply to it (root and nested AGENTS.md, path-scoped rules), the architecture boundaries that constrain it, and the docs worth reading on demand.",
     inputSchema: obj({ path: { type: "string", description: "Repository-relative file or directory" } }, ["path"]),
-    annotations: { readOnlyHint: true },
+    annotations: { ...READ_ONLY },
     run: (a, cwd, config) => {
       const p = String(a.path);
       const ctx = xray(cwd, { ...config, agents: ["codex"] }, p)[0];
@@ -74,14 +82,14 @@ export const TOOLS: Tool[] = [
     name: "harness_verify_commands",
     description: "Returns the exact shell commands that must pass before a task counts as done (test, lint, typecheck, build).",
     inputSchema: obj(),
-    annotations: { readOnlyHint: true },
+    annotations: { ...READ_ONLY },
     run: (_a, _cwd, config) => ({ commands: config.commands, rule: "A task is not done until test and static checks pass." }),
   },
   {
     name: "harness_check_files",
     description: "Checks changed files against the harness: architecture boundaries, leaked secrets, and broken or stale references in docs. Call before finishing a task with the files you created or edited.",
     inputSchema: obj({ files: { type: "array", items: { type: "string" }, description: "Repository-relative paths" } }, ["files"]),
-    annotations: { readOnlyHint: true },
+    annotations: { ...READ_ONLY },
     run: (a, cwd) => {
       const files = (a.files as string[]) ?? [];
       const results = checkFiles(cwd, files);
@@ -96,7 +104,7 @@ export const TOOLS: Tool[] = [
     name: "harness_can_import",
     description: "Before adding an import, asks whether a file may import a module under the declared architecture boundaries. Returns allowed=false with the reason when it would cross a boundary.",
     inputSchema: obj({ file: { type: "string", description: "Importing file, repository-relative" }, import: { type: "string", description: "Import specifier as it would be written" } }, ["file", "import"]),
-    annotations: { readOnlyHint: true },
+    annotations: { ...READ_ONLY },
     run: (a, cwd, config) => {
       const file = String(a.file);
       const spec = String(a.import);
@@ -127,7 +135,7 @@ export const TOOLS: Tool[] = [
       },
       ["failure", "fix"],
     ),
-    annotations: { readOnlyHint: false, destructiveHint: false },
+    annotations: { ...APPEND_ONLY },
     run: (a, cwd, config) => {
       const entry = addEntry(cwd, config.context.entry, { failure: String(a.failure), fix: a.fix as FixKind, rule: a.rule as string | undefined, artifact: a.artifact as string | undefined });
       return { recorded: entry, next: "run `gearness sync` (or your hook) so every agent tool sees the rule" };
