@@ -29,6 +29,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # The study kit (study/) has its own tests, including an end-to-end run with a fake agent. Node 22+ only: the
+      # `node --test <glob>` form needs Node 21+ on Windows, where the shell does not expand globs.
+      - run: npm run study:test
+        if: matrix.node >= 22
       # Dogfooding: gearness gates its own harness.
       - run: node dist/cli.js lint --format github
       - run: node dist/cli.js doctor --ci
