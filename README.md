@@ -210,6 +210,10 @@ Each run happens in a throwaway git worktree with the **same code** and a **diff
 from your harness change. Tasks are YAML files with a prompt, a check command and files the agent must not touch.
 Works with Claude Code, Codex, Aider, Gemini CLI or any command. See [docs/eval.md](docs/eval.md).
 
+Does a harness really make agents fail less? We are measuring it in the open: the protocol, a reproducible runner and a
+volunteer mode to replicate the study on your own repository live in [study/](study/README.md). Results will be published
+there, whatever they show.
+
 ## Architecture boundaries
 
 ```yaml
@@ -230,7 +234,7 @@ Drop a file in `.harness/rules/` or share rules as an npm package - see [docs/pl
 
 ## Scoring
 
-Twenty-one rules across six pillars - **context**, **verification**, **architecture**, **agent tooling**, **safety** and
+Twenty-two rules across six pillars - **context**, **verification**, **architecture**, **agent tooling**, **safety** and
 **feedback loop** - each worth points. A freshly scaffolded harness scores around 75: the structure is there, the
 knowledge isn't yet. See [docs/rules.md](docs/rules.md) for every rule and [docs/principles.md](docs/principles.md) for the reasoning.
 

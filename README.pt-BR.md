@@ -125,6 +125,10 @@ Cada execução acontece em um git worktree descartável, com o **mesmo código*
 diferença na taxa de acerto vem da mudança no harness. Funciona com Claude Code, Codex, Aider, Gemini CLI ou qualquer
 comando. Veja [docs/eval.md](docs/eval.md).
 
+Um harness realmente faz o agente errar menos? Estamos medindo isso às claras: o protocolo, um executor reproduzível e um
+modo voluntário para repetir o estudo no seu próprio repositório estão em [study/](study/README.md). Os resultados serão
+publicados lá, sejam quais forem.
+
 ## Fronteiras de arquitetura
 
 ```yaml
@@ -140,7 +144,7 @@ Coloque um arquivo em `.harness/rules/` ou publique regras como pacote npm - vej
 
 ## Pontuação
 
-Vinte e uma regras em seis pilares: **contexto**, **verificação**, **arquitetura**, **ferramentas de agente**, **segurança** e **ciclo de feedback**.
+Vinte e duas regras em seis pilares: **contexto**, **verificação**, **arquitetura**, **ferramentas de agente**, **segurança** e **ciclo de feedback**.
 Um harness recém-criado tira cerca de 75: a estrutura existe, o conhecimento ainda não. Veja [docs/rules.md](docs/rules.md)
 e [docs/principles.md](docs/principles.md).
 
