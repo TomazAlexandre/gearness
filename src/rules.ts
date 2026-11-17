@@ -78,6 +78,38 @@ export const SECRET_PATTERNS: [string, RegExp][] = [
   ["connection string with password", /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp):\/\/[^\s:/@]+:[^\s@/]{3,}@/],
 ];
 
+/** Signals that an entry file carries real project knowledge, not just a title and a command. Deterministic: no model involved. */
+const COMMAND_START = /^(npm|pnpm|yarn|npx|bun|deno|make|just|task|cargo|go|pytest|python3?|pip|uv|poetry|mvn|gradle|\.\/gradlew|dotnet|bundle|rake|composer|php|docker|git)\s/;
+const RULE_WORDS = /\b(never|always|must|must not|do not|don't|avoid|prefer|forbidden|required|only)\b/i;
+
+export interface SubstanceSignal {
+  id: string;
+  ok: boolean;
+  message: string;
+}
+
+export function substanceSignals(text: string, exists: (rel: string) => boolean): SubstanceSignal[] {
+  const lines = text.split("\n");
+  const inFence = (() => {
+    let open = false;
+    return lines.map((l) => (/^\s*(```|~~~)/.test(l) ? ((open = !open), true) : open));
+  })();
+  const prose = lines.filter((l, i) => l.trim() && !/^\s*#{1,6}\s/.test(l) && !/^\s*<!--.*-->\s*$/.test(l) && !l.includes(PLACEHOLDER) && !inFence[i]);
+  const headings = lines.filter((l, i) => /^\s*#{2,6}\s+\S/.test(l) && !inFence[i]).length;
+  const codeSpans = [...text.matchAll(/`([^`\n]+)`/g)].map((m) => m[1].trim());
+  const fenced = lines.filter((l, i) => inFence[i] && !/^\s*(```|~~~)/.test(l)).map((l) => l.trim().replace(/^[$>]\s*/, ""));
+  const hasCommand = [...codeSpans, ...fenced].some((c) => COMMAND_START.test(c));
+  const paths = [...codeSpans, ...[...text.matchAll(/\]\(([^)#\s]+)[^)]*\)/g)].map((m) => m[1])].filter((c) => /[\/.]/.test(c) && !/^(https?:|mailto:)/.test(c) && !/\s/.test(c));
+  const realPaths = paths.filter((c) => exists(c.replace(/^\.\//, "").replace(/\/$/, "")));
+  return [
+    { id: "content", ok: prose.length >= 8, message: `only ${prose.length} line(s) of real content (aim for 8 or more): a thin entry file tells agents almost nothing` },
+    { id: "structure", ok: headings >= 2, message: `${headings} section heading(s); organise it into at least 2 sections (commands, conventions, map...)` },
+    { id: "commands", ok: hasCommand, message: "no runnable command (build, test, lint) in code; agents cannot verify their own work" },
+    { id: "pointers", ok: realPaths.length >= 1, message: "no pointer to an existing file or folder; link the docs and code areas that matter (progressive disclosure)" },
+    { id: "rules", ok: prose.some((l) => RULE_WORDS.test(l)), message: "states no rule (never, always, must, avoid...); a harness exists to say what agents must and must not do" },
+  ];
+}
+
 export const RULES: Rule[] = [
   {
     id: "context/entry-exists",
@@ -220,6 +252,27 @@ export const RULES: Rule[] = [
       return [...config.context.docs, ...(config.context.status ? [config.context.status] : [])]
         .filter((d) => !linked.has(path.posix.normalize(d)) && !entry.includes(d))
         .map((d) => ({ message: `${d} is not referenced from ${config.context.entry}`, file: config.context.entry, hint: "add it to the Map section with one line on when to read it" }));
+    },
+  },
+  {
+    id: "context/entry-substance",
+    pillar: "context",
+    weight: 12,
+    severity: "warn",
+    description: "The entry file carries real project knowledge: enough content, sections, a runnable command, pointers to existing files and at least one explicit rule. A title and one command is not a harness.",
+    check: ({ config, read, exists }) => {
+      const text = read(config.context.entry);
+      if (text === null) return [];
+      return substanceSignals(text, exists)
+        .filter((x) => !x.ok)
+        .map((x) => ({ message: x.message, file: config.context.entry, hint: "add what an engineer new to this repository would need to know before touching it" }));
+    },
+    // Each of the 5 signals is worth a fifth of the points.
+    credit: ({ config, read, exists }) => {
+      const text = read(config.context.entry);
+      if (text === null) return 1;
+      const signals = substanceSignals(text, exists);
+      return signals.filter((x) => x.ok).length / signals.length;
     },
   },
   {

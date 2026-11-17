@@ -7,7 +7,7 @@ Prove that the harness helps: run the pilot in `study/`, then the real study. Pu
 
 ## Next steps
 - Case study: protocol, runner and pilot are in `study/` (see `study/README.md`). Next: run the pilot with `--runs 1`, then build Study A and B.
-- Score: a trivial entry file still scores ~91 (see `study/PROTOCOL.md` §9). Consider a substance rule before freezing the protocol.
+- Score: `context/entry-substance` added (a thin entry file went from ~91 to ~81). `context/placeholders` (30 pts) still passes vacuously for files without TODOs; decide before freezing the protocol (`study/PROTOCOL.md` §9).
 - Official rule presets (Next.js, Django, Spring, Go services) as npm packages.
 - Hooks for Cursor, Gemini CLI and Codex as their hook APIs stabilize.
 
@@ -15,4 +15,4 @@ Prove that the harness helps: run the pilot in `study/`, then the real study. Pu
 - Verify headless flags of the gemini and aider eval presets against current CLI versions.
 
 ## Recently done
-- Score is capped at 39 when the entry file is missing (it used to be 82). 111 tests passing.
+- Score is capped at 39 when the entry file is missing (it used to be 82). 123 tests passing.

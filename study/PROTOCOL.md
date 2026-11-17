@@ -150,9 +150,13 @@ is worth 30 of 162 points. Without the entry file the score is now capped at 39 
 and what the score would have been. Each manifest records the exact gearness commit, so scores are traceable to the
 formula that produced them.
 
-**Still open.** A trivial entry file still scores high: a three-line `AGENTS.md` reaches about 91 (grade A), because the
-same rules have little to flag in a short file. H5 therefore tests a score that separates *no harness* from *some
-harness*, but not yet *thin* from *substantive*. H5 stays exploratory and is published either way. Scores must not be
+**Narrowed after 0.3.0.** The rule `context/entry-substance` (12 of 174 points) checks five signals in the entry file:
+enough real content, at least two sections, a runnable command, a pointer to an existing file or folder, and at least one
+explicit rule. A three-line `AGENTS.md` went from about 91 (grade A) to 81 (grade B).
+
+**Still open.** The separation is modest: `context/placeholders` (30 of 174 points) still awards full marks to any file
+without scaffold TODO markers, however thin. H5 therefore tests a score that separates *no harness* from *some harness*
+well and *thin* from *substantive* only partly. H5 stays exploratory and is published either way. Scores must not be
 re-tuned after seeing outcomes.
 
 ## 10. Later studies (out of scope here)
