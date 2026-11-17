@@ -164,14 +164,20 @@ is worth 30 of 162 points. Without the entry file the score is now capped at 39 
 and what the score would have been. Each manifest records the exact gearness commit, so scores are traceable to the
 formula that produced them.
 
-**Narrowed after 0.3.0.** The rule `context/entry-substance` (12 of 174 points) checks five signals in the entry file:
-enough real content, at least two sections, a runnable command, a pointer to an existing file or folder, and at least one
-explicit rule. A three-line `AGENTS.md` went from about 91 (grade A) to 81 (grade B).
+**Narrowed after 0.3.0, before freezing.** Two changes, both made before any outcome existed:
 
-**Still open.** The separation is modest: `context/placeholders` (30 of 174 points) still awards full marks to any file
-without scaffold TODO markers, however thin. H5 therefore tests a score that separates *no harness* from *some harness*
-well and *thin* from *substantive* only partly. H5 stays exploratory and is published either way. Scores must not be
-re-tuned after seeing outcomes.
+1. `context/entry-substance` (12 of 174 points) checks five signs in the entry file: enough real content, at least two
+   sections, a runnable command, a pointer to an existing file or folder, and at least one explicit rule.
+2. `context/placeholders` (30 of 174 points) used to give full marks to any file without scaffold markers, however thin.
+   It now gives full credit only if the entry file shows at least 3 of those 5 signs, and a proportional share below that,
+   with a finding that says why.
+
+A three-line `AGENTS.md` went from about 91 (grade A) to about 69 (grade C). A freshly scaffolded harness is unchanged
+(about 75: its markers already cost the points) and so is a substantive file.
+
+**Still open.** The signs are heuristics (length, structure, a command, a pointer, a rule). A file can show all five and
+still say nothing true or useful, which no deterministic score can detect. That is exactly what H5 tests against real
+outcomes. H5 stays exploratory and is published either way. Scores must not be re-tuned after seeing outcomes.
 
 ## 10. Later studies (out of scope here)
 

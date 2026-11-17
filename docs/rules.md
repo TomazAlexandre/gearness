@@ -15,7 +15,7 @@ Each rule belongs to a pillar and is worth points in `gearness doctor` (total 17
 | `context/stale-references` | warn | 6 | File and folder paths cited in context docs (in `code`) still exist. Renamed code with stale docs sends agents to places that are gone. |
 | `context/docs-referenced` | warn | 5 | Every context doc is linked from the entry file, so agents can discover it (progressive disclosure). |
 | `context/entry-substance` | warn | 12 | The entry file carries real project knowledge: enough content, sections, a runnable command, pointers to existing files and at least one explicit rule. A title and one command is not a harness. |
-| `context/placeholders` | warn | 30 | Scaffolded TODO(gearness) markers are replaced with real project knowledge. Structure without content is not a harness. |
+| `context/placeholders` | warn | 30 | Scaffolded TODO(gearness) markers are replaced with real project knowledge, and the entry file shows at least 3 of the 5 signs of it (see context/entry-substance). Structure without content is not a harness, and neither is a file with nothing left to fill in. |
 | `context/status-fresh` | warn | 4 | The status/handoff file was updated in the last 30 days. |
 | `context/workspaces` | warn | 5 | In a monorepo, every declared workspace has its own harness and is linked from the root entry file. |
 
