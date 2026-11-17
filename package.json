@@ -52,7 +52,8 @@
     "test": "npm run build && node scripts/run-tests.mjs",
     "docs:rules": "npm run build && node scripts/gen-rules-doc.mjs",
     "harness": "node dist/cli.js doctor",
-    "demo": "npm run build && bash scripts/demo.sh"
+    "demo": "npm run build && bash scripts/demo.sh",
+    "study:test": "npm run build && node --test study/runner/test/*.test.mjs"
   },
   "engines": {
     "node": ">=18"

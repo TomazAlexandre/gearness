@@ -1,0 +1,71 @@
+diff --git a/docs/configuration.md b/docs/configuration.md
+index b6854fa..0ed90e9 100644
+--- a/docs/configuration.md
++++ b/docs/configuration.md
+@@ -12,7 +12,7 @@ validation from the JSON Schema referenced on the first line that `gearness init
+ | `version` | `1` | - | Schema version. Required. |
+ | `project.name` | string | - | Required. Shown in reports and generated files. |
+ | `project.description` | string | - | One paragraph used in the scaffolded `AGENTS.md`. |
+-| `stack` | `node \| python \| go \| java \| rust \| dotnet \| generic` | detected | Informational; used by presets. |
++| `stack` | `node \| python \| go \| java \| rust \| ruby \| dotnet \| generic` | detected | Informational; used by presets. |
+ | `commands` | map name → shell command | detected | How agents verify work. `test` and `lint`/`typecheck` are expected. Commands using `npm/pnpm/yarn/bun run`, `make`, `just` or `task` are checked against their files. |
+ | `context.entry` | path | `AGENTS.md` | Single source of truth for agent instructions. |
+ | `context.docs` | paths | architecture + conventions | Deeper docs. Each must exist and be linked from the entry. |
+diff --git a/schema/harness.schema.json b/schema/harness.schema.json
+index 46df83b..7ca2e27 100644
+--- a/schema/harness.schema.json
++++ b/schema/harness.schema.json
+@@ -38,6 +38,7 @@
+         "go",
+         "java",
+         "rust",
++        "ruby",
+         "dotnet",
+         "generic"
+       ]
+diff --git a/src/config.ts b/src/config.ts
+index 8945b82..da7dfcf 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -4,7 +4,7 @@ import { REPO_URL, SCHEMA_URL } from "./meta.js";
+ import { readFile } from "./util.js";
+ 
+ export const CONFIG_FILE = "harness.yaml";
+-export const STACKS = ["node", "python", "go", "java", "rust", "dotnet", "generic"] as const;
++export const STACKS = ["node", "python", "go", "java", "rust", "ruby", "dotnet", "generic"] as const;
+ export const AGENTS = ["claude", "cursor", "copilot", "codex", "gemini", "windsurf", "cline"] as const;
+ /** Agents enabled by default; the rest are opt-in or enabled when init detects them. */
+ export const DEFAULT_AGENTS = ["claude", "cursor", "copilot", "codex"] as const;
+diff --git a/src/detect.ts b/src/detect.ts
+index c9c835b..1ca2e42 100644
+--- a/src/detect.ts
++++ b/src/detect.ts
+@@ -119,6 +119,11 @@ export function detect(cwd: string): Detection {
+     commands.build = "cargo build";
+     commands.lint = "cargo clippy -- -D warnings";
+     commands.test = "cargo test";
++  } else if (has("Gemfile")) {
++    stack = "ruby";
++    commands.install = "bundle install";
++    commands.lint = "bundle exec rubocop";
++    commands.test = "bundle exec rspec";
+   } else if (fs.readdirSync(cwd).some((f) => f.endsWith(".sln") || f.endsWith(".csproj"))) {
+     stack = "dotnet";
+     commands.build = "dotnet build";
+diff --git a/src/test/features.test.ts b/src/test/features.test.ts
+index 31f882c..db4bffa 100644
+--- a/src/test/features.test.ts
++++ b/src/test/features.test.ts
+@@ -44,6 +44,12 @@ describe("globs", () => {
+ 
+ describe("detect: more stacks and runners", () => {
+   it("rust", () => assert.equal(detect(tmpRepo({ "Cargo.toml": '[package]\nname = "core"\n' })).commands.lint, "cargo clippy -- -D warnings"));
++  it("ruby", () => {
++    const d = detect(tmpRepo({ Gemfile: 'source "https://rubygems.org"\n' }));
++    assert.equal(d.stack, "ruby");
++    assert.equal(d.commands.test, "bundle exec rspec");
++    assert.equal(d.commands.lint, "bundle exec rubocop");
++  });
+   it("dotnet", () => assert.equal(detect(tmpRepo({ "App.sln": "" })).stack, "dotnet"));
+   it("prefers just and task targets", () => {
+     const d = detect(tmpRepo({ "go.mod": "module x\n", justfile: "test:\n  go test ./...\n", "Taskfile.yml": "version: '3'\ntasks:\n  lint:\n    cmds: [golangci-lint run]\n" }));

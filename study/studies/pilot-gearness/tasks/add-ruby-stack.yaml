@@ -1,0 +1,14 @@
+# Does the harness lead an agent to extend stack detection the way docs/CONVENTIONS.md asks ("New stack")?
+# Task files live outside the agent's worktree, so the check below is never visible to it.
+id: add-ruby-stack
+prompt: |
+  Add Ruby support to stack detection: a repository with a Gemfile should be detected as stack "ruby",
+  with `bundle exec rspec` as the test command and `bundle exec rubocop` as the lint command.
+  Include tests.
+setup: npm ci
+check: npm test && node "{{HIDDEN}}/add-ruby-stack.mjs"
+forbid:
+  - "AGENTS.md"
+  - ".harness/ratchet.yaml"
+  - "package-lock.json"
+timeoutSeconds: 1200
