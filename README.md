@@ -4,6 +4,7 @@
 [![npm](https://img.shields.io/npm/v/gearness)](https://www.npmjs.com/package/gearness)
 [![node](https://img.shields.io/node/v/gearness)](package.json)
 [![license](https://img.shields.io/github/license/TomazAlexandre/gearness)](LICENSE)
+[![M8ven Score](https://m8ven.ai/badge/mcp/tomazalexandre/gearness)](https://m8ven.ai/mcp/tomazalexandre/gearness?s=readme)
 
 **Harness engineering as code.** Scaffold, lint, score and evolve the harness that keeps AI coding agents reliable in your repository.
 

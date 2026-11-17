@@ -3,6 +3,7 @@
 [![CI](https://github.com/TomazAlexandre/gearness/actions/workflows/ci.yml/badge.svg)](https://github.com/TomazAlexandre/gearness/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/gearness)](https://www.npmjs.com/package/gearness)
 [![license](https://img.shields.io/github/license/TomazAlexandre/gearness)](LICENSE)
+[![M8ven Score](https://m8ven.ai/badge/mcp/tomazalexandre/gearness)](https://m8ven.ai/mcp/tomazalexandre/gearness?s=readme)
 
 **Harness engineering como código.** Crie, valide, pontue e evolua o *harness* que torna agentes de IA confiáveis no seu repositório.
 
