@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/TomazAlexandre/gearness/compare/v0.3.0...v0.4.0) (2026-11-17)
+
+
+### Features
+
+* **rules:** add context/entry-substance to tell thin entry files from substantive ones ([8746f61](https://github.com/TomazAlexandre/gearness/commit/8746f6147d4e8189b40db533543a5a96f69dedb3))
+
+
+### Bug Fixes
+
+* report the real package version ([16860ec](https://github.com/TomazAlexandre/gearness/commit/16860ec47caecf2eb487bc6bdb4a1589403876fd))
+
 ## [0.3.0](https://github.com/TomazAlexandre/gearness/compare/v0.2.0...v0.3.0) (2026-11-17)
 
 
