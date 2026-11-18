@@ -64,6 +64,15 @@ describe("context/entry-substance", () => {
     assert.ok(ids("Use the tests.\n").includes("commands"));
   });
 
+  it("recognises commands that start with environment assignments, other runners and scripts", () => {
+    for (const c of ["PYTHONPATH=src python -m unittest discover -s tests", "CI=1 FORCE_COLOR=0 npm test", "swift test", "flutter test", "mix test", "./scripts/test.sh", "bazel test //..."]) {
+      assert.ok(!ids(`Run \`${c}\` before committing.`).includes("commands"), c);
+    }
+    for (const c of ["docs/guide.md", "src/handlers/", "FOO=bar", "./README.md"]) {
+      assert.ok(ids(`See \`${c}\` for details.`).includes("commands"), `${c} is not a command`);
+    }
+  });
+
   it("does not count scaffold placeholders, headings or fenced code as real content", () => {
     const scaffold = Array.from({ length: 20 }, (_, i) => `TODO(gearness) fill in line ${i}`).join("\n");
     assert.ok(ids(scaffold).includes("content"));

@@ -79,7 +79,9 @@ export const SECRET_PATTERNS: [string, RegExp][] = [
 ];
 
 /** Signals that an entry file carries real project knowledge, not just a title and a command. Deterministic: no model involved. */
-const COMMAND_START = /^(npm|pnpm|yarn|npx|bun|deno|make|just|task|cargo|go|pytest|python3?|pip|uv|poetry|mvn|gradle|\.\/gradlew|dotnet|bundle|rake|composer|php|docker|git)\s/;
+const COMMAND_START = /^(npm|pnpm|yarn|npx|bun|deno|make|just|task|cargo|go|pytest|python3?|pip|uv|poetry|tox|nox|ruff|mvn|gradle|\.\/gradlew|\.\/mvnw|dotnet|bundle|rake|rspec|composer|php|docker|git|swift|flutter|dart|mix|sbt|nx|turbo|bazel|cmake|ctest|eslint|prettier|tsc|vitest|jest)\s|^\.\/[\w./-]+\.(sh|ps1|bat|cmd)\b/;
+/** `PYTHONPATH=src python -m unittest` is still a command: leading VAR=value assignments do not count. */
+const withoutEnv = (c: string) => c.replace(/^(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)+/, "");
 const RULE_WORDS = /\b(never|always|must|must not|do not|don't|avoid|prefer|forbidden|required|only)\b/i;
 
 /** Signs of real project knowledge (out of 5) an entry file needs before context/placeholders gives it full credit. */
@@ -101,7 +103,7 @@ export function substanceSignals(text: string, exists: (rel: string) => boolean)
   const headings = lines.filter((l, i) => /^\s*#{2,6}\s+\S/.test(l) && !inFence[i]).length;
   const codeSpans = [...text.matchAll(/`([^`\n]+)`/g)].map((m) => m[1].trim());
   const fenced = lines.filter((l, i) => inFence[i] && !/^\s*(```|~~~)/.test(l)).map((l) => l.trim().replace(/^[$>]\s*/, ""));
-  const hasCommand = [...codeSpans, ...fenced].some((c) => COMMAND_START.test(c));
+  const hasCommand = [...codeSpans, ...fenced].some((c) => COMMAND_START.test(withoutEnv(c)));
   const paths = [...codeSpans, ...[...text.matchAll(/\]\(([^)#\s]+)[^)]*\)/g)].map((m) => m[1])].filter((c) => /[\/.]/.test(c) && !/^(https?:|mailto:)/.test(c) && !/\s/.test(c));
   const realPaths = paths.filter((c) => exists(c.replace(/^\.\//, "").replace(/\/$/, "")));
   return [
