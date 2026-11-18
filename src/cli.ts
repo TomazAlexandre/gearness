@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import path from "node:path";
 import { adapterStatus, sync } from "./adapters.js";
+import { BADGE_END, BADGE_START, badgeMarkdown, badgeUrl, updateBadgeBlock } from "./badge.js";
 import { AGENTS, type AgentId, CONFIG_FILE, type HarnessConfig, loadConfig, STACKS, type Stack } from "./config.js";
 import { checkFiles, fileFromClaudeHook, hookFeedback } from "./check.js";
 import { AGENT_PRESETS, loadHistory, loadTasks, newTask, RESULTS_DIR, runEval, trend } from "./eval.js";
@@ -66,7 +67,7 @@ ${c.bold("Commands")}
   graph             Module dependency graph (Mermaid/DOT/JSON) with violations and cycles highlighted
   eval              Run eval tasks against an agent and measure the pass rate
   eval new <id>     Scaffold an eval task   eval list   List tasks   eval report   Pass-rate trend
-  badge             Print a README badge with the current score
+  badge             Print a README badge with the current score   badge --write [file]   update it in place   badge --check   fail if stale
   rules             List all rules (built-in and custom)    explain <rule>   Explain a rule
 
 ${c.bold("Global")}  --cwd <dir>   --json   -h/--help   -v/--version
@@ -677,13 +678,27 @@ function cmdBoundaries(cwd: string, sub: string | undefined, f: Flags): number {
   return 0;
 }
 
-async function cmdBadge(cwd: string, f: Flags): Promise<number> {
+async function cmdBadge(cwd: string, f: Flags, file?: string): Promise<number> {
   const config = requireConfig(cwd);
   const r = (await evaluateTree(cwd, config))[0].report!;
-  const colorName = r.score >= 90 ? "brightgreen" : r.score >= 75 ? "green" : r.score >= 60 ? "yellow" : r.score >= 40 ? "orange" : "red";
-  const url = `https://img.shields.io/badge/harness-${r.score}%2F100_${r.grade}-${colorName}`;
-  if (f.json) console.log(JSON.stringify({ score: r.score, grade: r.grade, url }));
-  else console.log(`[![harness score](${url})](${REPO_URL})`);
+  const markdown = badgeMarkdown(r.score, r.grade);
+  if (f.write === true || f.check === true) {
+    const rel = file ?? "README.md";
+    const target = path.resolve(cwd, rel);
+    if (!fs.existsSync(target)) throw new UsageError(`${rel} not found`);
+    const updated = updateBadgeBlock(fs.readFileSync(target, "utf8"), markdown);
+    if (!updated) throw new UsageError(`${rel} has no badge block. Add these two lines where the badge should appear, then run again:\n  ${BADGE_START}\n  ${BADGE_END}`);
+    if (f.check === true) {
+      if (!updated.changed) return console.log(`${rel}: badge is up to date (${r.score}/100 ${r.grade})`), 0;
+      console.error(`${rel}: badge is out of date (score is now ${r.score}/100 ${r.grade}). Run \`${TOOL} badge --write\`.`);
+      return 1;
+    }
+    if (updated.changed) fs.writeFileSync(target, updated.text);
+    console.log(updated.changed ? `${rel}: badge updated to ${r.score}/100 ${r.grade}` : `${rel}: badge already up to date (${r.score}/100 ${r.grade})`);
+    return 0;
+  }
+  if (f.json) console.log(JSON.stringify({ score: r.score, grade: r.grade, url: badgeUrl(r.score, r.grade) }));
+  else console.log(markdown);
   return 0;
 }
 
@@ -717,7 +732,7 @@ async function main(): Promise<number> {
     case "context": return cmdContext(cwd, sub, flags);
     case "learn": return cmdLearn(cwd, flags);
     case "boundaries": return cmdBoundaries(cwd, sub, flags);
-    case "badge": return cmdBadge(cwd, flags);
+    case "badge": return cmdBadge(cwd, flags, sub);
     case "rules": return cmdRules(cwd, flags);
     default:
       throw new UsageError(`unknown command "${cmd}". Run \`${TOOL} --help\`.`);
