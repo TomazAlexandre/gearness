@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/TomazAlexandre/gearness/compare/v0.5.0...v0.6.0) (2026-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **rules:** projects with a thin entry file score lower, which can fail gates.minScore and doctor --ci.
+
+### Features
+
+* **badge:** update the README badge in place and fail CI when it is stale ([3ff8a6e](https://github.com/TomazAlexandre/gearness/commit/3ff8a6e229c8d9aae6328df8fdc73cf8075204f4))
+* **rules:** recognise commands with environment prefixes; add the AGENTS.md survey ([63a7a81](https://github.com/TomazAlexandre/gearness/commit/63a7a81c4374a10fb17cd7dc41fb572416377dc4))
+* **rules:** require real content for full credit in context/placeholders ([fa49ee2](https://github.com/TomazAlexandre/gearness/commit/fa49ee274ce44b3779a7d46d9945bc5d683cfe01))
+
 ## [0.5.0](https://github.com/TomazAlexandre/gearness/compare/v0.4.0...v0.5.0) (2026-11-17)
 
 
