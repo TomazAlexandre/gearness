@@ -4,6 +4,9 @@
 [![npm](https://img.shields.io/npm/v/gearness)](https://www.npmjs.com/package/gearness)
 [![node](https://img.shields.io/node/v/gearness)](package.json)
 [![license](https://img.shields.io/github/license/TomazAlexandre/gearness)](LICENSE)
+<!-- gearness:badge -->
+[![harness score](https://img.shields.io/badge/harness-100%2F100_A-brightgreen)](https://github.com/TomazAlexandre/gearness)
+<!-- /gearness:badge -->
 [![M8ven Score](https://m8ven.ai/badge/mcp/tomazalexandre/gearness)](https://m8ven.ai/mcp/tomazalexandre/gearness?s=readme)
 
 **Harness engineering as code.** Scaffold, lint, score and evolve the harness that keeps AI coding agents reliable in your repository.
@@ -106,7 +109,7 @@ plus Makefile, justfile and Taskfile targets. Monorepo? `npx gearness init --wor
 | `gearness context [path]` | Context X-ray: what each agent loads for a path, token cost, duplicates |
 | `gearness learn` | Turn mistakes agents repeat into learned rules. `--apply`, `--min` |
 | `gearness explain <rule>` | What a rule checks and its findings in this repo |
-| `gearness badge` | Print a README badge with the current score |
+| `gearness badge` | Print a README badge with the current score; `--write [file]` updates it in place, `--check` fails if it is stale |
 | `gearness rules` | List all rules (built-in and custom), pillars and weights |
 
 Exit codes: `0` ok · `1` findings or gate failed · `2` usage or config error.
@@ -210,6 +213,10 @@ Each run happens in a throwaway git worktree with the **same code** and a **diff
 from your harness change. Tasks are YAML files with a prompt, a check command and files the agent must not touch.
 Works with Claude Code, Codex, Aider, Gemini CLI or any command. See [docs/eval.md](docs/eval.md).
 
+Does a harness really make agents fail less? We are measuring it in the open: the protocol, a reproducible runner and a
+volunteer mode to replicate the study on your own repository live in [study/](study/README.md). Results will be published
+there, whatever they show.
+
 ## Architecture boundaries
 
 ```yaml
@@ -230,7 +237,7 @@ Drop a file in `.harness/rules/` or share rules as an npm package - see [docs/pl
 
 ## Scoring
 
-Twenty-one rules across six pillars - **context**, **verification**, **architecture**, **agent tooling**, **safety** and
+Twenty-two rules across six pillars - **context**, **verification**, **architecture**, **agent tooling**, **safety** and
 **feedback loop** - each worth points. A freshly scaffolded harness scores around 75: the structure is there, the
 knowledge isn't yet. See [docs/rules.md](docs/rules.md) for every rule and [docs/principles.md](docs/principles.md) for the reasoning.
 
@@ -248,7 +255,16 @@ knowledge isn't yet. See [docs/rules.md](docs/rules.md) for every rule and [docs
 On pull requests the generated workflow also compares with the base branch and fails if the harness got worse
 (`doctor --base origin/main --no-regress`). The action annotates problems inline on the PR diff, can keep one up-to-date report comment on the PR (`comment: true`), writes a markdown report to the job summary, can emit SARIF for
 code scanning (`sarif: true`), and exposes the score as `steps.<id>.outputs.score`.
-Add the score to your README with `gearness badge`.
+Add the score to your README with `gearness badge`. To keep it current, put two marker lines where the badge should
+appear and let gearness fill them in:
+
+```markdown
+<!-- gearness:badge -->
+<!-- /gearness:badge -->
+```
+
+`gearness badge --write` updates what is between them and nothing else, and `gearness badge --check` exits 1 when the badge no
+longer matches the score, so a CI step can keep it honest.
 
 ## Configuration
 

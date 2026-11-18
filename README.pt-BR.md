@@ -3,6 +3,9 @@
 [![CI](https://github.com/TomazAlexandre/gearness/actions/workflows/ci.yml/badge.svg)](https://github.com/TomazAlexandre/gearness/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/gearness)](https://www.npmjs.com/package/gearness)
 [![license](https://img.shields.io/github/license/TomazAlexandre/gearness)](LICENSE)
+<!-- gearness:badge -->
+[![harness score](https://img.shields.io/badge/harness-100%2F100_A-brightgreen)](https://github.com/TomazAlexandre/gearness)
+<!-- /gearness:badge -->
 [![M8ven Score](https://m8ven.ai/badge/mcp/tomazalexandre/gearness)](https://m8ven.ai/mcp/tomazalexandre/gearness?s=readme)
 
 **Harness engineering como código.** Crie, valide, pontue e evolua o *harness* que torna agentes de IA confiáveis no seu repositório.
@@ -65,7 +68,7 @@ Makefile, justfile e Taskfile. Monorepo? `npx gearness init --workspaces`.
 | `gearness context [caminho]` | Raio-X de contexto: o que cada agente carrega para um caminho, custo em tokens, duplicações |
 | `gearness learn` | Transforma erros repetidos dos agentes em regras aprendidas. `--apply` |
 | `gearness explain <regra>` | Explica uma regra e mostra o que ela encontrou no repositório |
-| `gearness badge` | Gera um badge com a nota para o README |
+| `gearness badge` | Gera um badge com a nota para o README; `--write [arquivo]` o atualiza no lugar (entre `<!-- gearness:badge -->` e `<!-- /gearness:badge -->`), `--check` falha se estiver desatualizado |
 | `gearness rules` | Lista as regras (nativas e customizadas), pilares e pesos |
 
 ## A catraca (ratchet)
@@ -125,6 +128,10 @@ Cada execução acontece em um git worktree descartável, com o **mesmo código*
 diferença na taxa de acerto vem da mudança no harness. Funciona com Claude Code, Codex, Aider, Gemini CLI ou qualquer
 comando. Veja [docs/eval.md](docs/eval.md).
 
+Um harness realmente faz o agente errar menos? Estamos medindo isso às claras: o protocolo, um executor reproduzível e um
+modo voluntário para repetir o estudo no seu próprio repositório estão em [study/](study/README.md). Os resultados serão
+publicados lá, sejam quais forem.
+
 ## Fronteiras de arquitetura
 
 ```yaml
@@ -140,7 +147,7 @@ Coloque um arquivo em `.harness/rules/` ou publique regras como pacote npm - vej
 
 ## Pontuação
 
-Vinte e uma regras em seis pilares: **contexto**, **verificação**, **arquitetura**, **ferramentas de agente**, **segurança** e **ciclo de feedback**.
+Vinte e duas regras em seis pilares: **contexto**, **verificação**, **arquitetura**, **ferramentas de agente**, **segurança** e **ciclo de feedback**.
 Um harness recém-criado tira cerca de 75: a estrutura existe, o conhecimento ainda não. Veja [docs/rules.md](docs/rules.md)
 e [docs/principles.md](docs/principles.md).
 
