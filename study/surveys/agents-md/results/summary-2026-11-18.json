@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-18",
+  "gearness": "0.2.0",
+  "population": "public repositories tagged \"agents-md\" on GitHub, not forks or archived, up to 30 MB",
+  "sampled": 160,
+  "downloaded": 160,
+  "withRootAgentsMd": 112,
+  "analysed": 112,
+  "lines": {
+    "median": 75,
+    "p90": 186,
+    "max": 398
+  },
+  "signsOfRealContent": {
+    "0": {
+      "repos": 1,
+      "share": 0.9
+    },
+    "1": {
+      "repos": 2,
+      "share": 1.8
+    },
+    "2": {
+      "repos": 1,
+      "share": 0.9
+    },
+    "3": {
+      "repos": 11,
+      "share": 9.8
+    },
+    "4": {
+      "repos": 31,
+      "share": 27.7
+    },
+    "5": {
+      "repos": 66,
+      "share": 58.9
+    }
+  },
+  "belowSubstanceGate": {
+    "repos": 4,
+    "share": 3.6
+  },
+  "shareMissingEachSign": {
+    "content": 4.5,
+    "structure": 10.7,
+    "commands": 28.6,
+    "pointers": 7.1,
+    "rules": 10.7
+  },
+  "reposWithFinding": {
+    "context/entry-substance": {
+      "repos": 46,
+      "share": 41.1
+    },
+    "context/entry-size": {
+      "repos": 26,
+      "share": 23.2
+    },
+    "context/stale-references": {
+      "repos": 15,
+      "share": 13.4
+    },
+    "context/placeholders": {
+      "repos": 4,
+      "share": 3.6
+    },
+    "context/broken-links": {
+      "repos": 1,
+      "share": 0.9
+    }
+  },
+  "evaluationMs": {
+    "median": 4,
+    "p90": 12,
+    "max": 32
+  },
+  "byView": {
+    "stars": {
+      "n": 53,
+      "belowGate": 3.8,
+      "medianLines": 77
+    },
+    "updated": {
+      "n": 59,
+      "belowGate": 3.4,
+      "medianLines": 73
+    }
+  }
+}
