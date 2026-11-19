@@ -108,11 +108,13 @@ export function buildStudy(repo, c, i, opt) {
   fs.writeFileSync(path.join(dir, "hidden/check.mjs"), checkScript(opt.test));
   fs.writeFileSync(path.join(dir, "reference", `${id}.patch`), raw(repo, ["diff", "--no-color", "--no-ext-diff", c.parent, c.sha, "--", ...c.source]).stdout);
   fs.writeFileSync(path.join(dir, "conditions/minimal/AGENTS.md"), `# ${path.basename(repo)}\n\nRun \`${opt.test}\` before you finish.\n`);
+  // Mining gearness itself: the study kit is in the parent commit and would be visible to the agent. Hide it.
+  const hasKit = text(repo, ["ls-tree", "--name-only", c.parent, "study/runner"]).trim() !== "";
   const task = { id, prompt: promptFrom(text(repo, ["log", "-1", "--format=%B", c.sha])), ...(opt.setup ? { setup: opt.setup } : {}), check: 'node "{{HIDDEN}}/check.mjs"', forbid: [], timeoutSeconds: 900 };
   fs.writeFileSync(path.join(dir, "tasks", `${id}.yaml`), `# Prompt derived from commit ${c.sha.slice(0, 10)}: read it and remove any hint about HOW it was solved before you measure.\n` + YAML.stringify(task, { lineWidth: 0 }));
   const study = {
     id, agent: opt.agent, runs: opt.runs, parallel: 1, seed: i + 1,
-    target: { path: repo, commit: c.parent },
+    target: { path: repo, commit: c.parent, ...(hasKit ? { exclude: ["study"] } : {}) },
     tasks: "tasks", hidden: "hidden", reference: "reference",
     conditions: { none: {}, minimal: { overlay: "conditions/minimal" }, full: { strip: false } },
   };

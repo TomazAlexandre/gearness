@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { findCandidates, promptFrom } from "../mine.mjs";
+import { buildStudy, findCandidates, promptFrom } from "../mine.mjs";
 import { CLI, node, READY, RUNNER } from "./fixture.mjs";
 
 const opts = { skip: READY ? false : "needs dist/cli.js (run `npm run build`), git and tar" };
@@ -120,4 +120,22 @@ test("mine explains when no commit qualifies", () => {
   const m = node(path.join(RUNNER, "mine.mjs"), ["--repo", dir, "--test", "npm test"]);
   assert.equal(m.status, 2); // an empty repository has no history at all
   assert.match(m.stderr, /git .*failed|No usable commits/);
+});
+
+test("when the repository carries the study kit itself, the study hides it from the agent", () => {
+  const mk = (withKit) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mine repo-"));
+    const git = (...a) => spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@t.t", ...a], { cwd: dir });
+    const put = (f, c) => { fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); fs.writeFileSync(path.join(dir, f), c); };
+    git("init", "-q");
+    put("AGENTS.md", "# x\n"); put("a.mjs", "1\n"); put("test/a.test.mjs", "0\n"); if (withKit) put("study/runner/lib.mjs", "// kit\n");
+    git("add", "-A"); git("commit", "-qm", "init");
+    put("a.mjs", "2\n"); put("test/a.test.mjs", "1\n"); git("add", "-A"); git("commit", "-qm", "fix: a");
+    const c = findCandidates(dir).candidates[0];
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), "mined-"));
+    buildStudy(dir, c, 0, { prefix: "vol", out, test: "node test/a.test.mjs", setup: undefined, runs: 1, agent: "claude" });
+    return fs.readFileSync(path.join(out, "vol-1", "study.yaml"), "utf8");
+  };
+  assert.match(mk(true), /exclude:\s*\n\s*- study/);
+  assert.ok(!mk(false).includes("exclude"), "a repository without the kit gets no exclusion");
 });
