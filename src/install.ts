@@ -5,7 +5,9 @@ import type { HarnessConfig } from "./config.js";
 import { PACKAGE } from "./meta.js";
 import { parseJsonc, readFile, writeFile } from "./util.js";
 
-export const INTEGRATIONS = ["claude", "git", "mcp"] as const;
+export const INTEGRATIONS = ["claude", "git", "mcp", "cursor", "codex"] as const;
+/** cursor and codex are experimental and opt-in: ask for them with `--only cursor` / `--only codex`. */
+export const DEFAULT_INTEGRATIONS: Integration[] = ["claude", "git", "mcp"];
 export type Integration = (typeof INTEGRATIONS)[number];
 
 export interface InstallAction {
@@ -16,7 +18,7 @@ export interface InstallAction {
 }
 
 /** Recognizes gearness hook commands however gearness is invoked (npx, local bin, node dist/cli.js). */
-const MARK_RE = /\bcheck --(?:hook claude|staged)\b/;
+const MARK_RE = /\b(?:check --(?:hook claude|staged)|guard --host (?:claude|cursor|codex))\b/;
 const isOurs = (text: string | null | undefined) => !!text && MARK_RE.test(text);
 
 /** How hooks and MCP clients should invoke gearness in this repository. */
@@ -53,30 +55,105 @@ function writeJson(file: string, data: unknown): void {
 
 type HookGroup = { matcher?: string; hooks?: { type: string; command: string; timeout?: number }[] };
 
-/** Claude Code PostToolUse hook: every edit is checked and violations are fed back to the agent (exit 2). */
-function installClaude(cwd: string, cmd: string, remove: boolean): InstallAction {
+/** Deletes a file we created, and its folder when that leaves it empty (rmdir refuses a folder with anything in it). */
+function removeFile(file: string): void {
+  fs.rmSync(file, { force: true });
+  try {
+    fs.rmdirSync(path.dirname(file));
+  } catch {
+    /* the folder holds other files: leave it */
+  }
+}
+
+/** Adds, refreshes or (entry = null) removes our group under `hooks[event]`, leaving every other group alone. */
+function upsertGroup(hooks: Record<string, HookGroup[]>, event: string, entry: HookGroup | null): "added" | "updated" | "unchanged" | "removed" {
+  const current = hooks[event] ?? [];
+  const groups = current.filter((g) => !g.hooks?.some((h) => isOurs(h.command)));
+  const existed = groups.length !== current.length;
+  if (entry === null) {
+    if (!existed) return "unchanged";
+    if (groups.length) hooks[event] = groups;
+    else delete hooks[event];
+    return "removed";
+  }
+  const before = JSON.stringify(current);
+  hooks[event] = [...groups, entry];
+  return JSON.stringify(hooks[event]) === before ? "unchanged" : existed ? "updated" : "added";
+}
+
+function combine(results: ReturnType<typeof upsertGroup>[]): "added" | "updated" | "unchanged" | "removed" {
+  if (results.every((r) => r === "unchanged")) return "unchanged";
+  if (results.includes("removed")) return "removed";
+  return results.every((r) => r === "added") ? "added" : "updated";
+}
+
+/**
+ * Claude Code hooks. PostToolUse: every edit is checked and violations are fed back to the agent (exit 2).
+ * PreToolUse: refuses edits to `protected` paths; installed only while the harness protects something, so a project that
+ * does not use the feature pays for no extra process per edit.
+ */
+function installClaude(cwd: string, cmd: string, remove: boolean, guard: boolean): InstallAction {
   const rel = ".claude/settings.json";
   const file = path.join(cwd, rel);
   const settings = readJson(file);
   const hooks = (settings.hooks ?? {}) as Record<string, HookGroup[]>;
-  const groups = (hooks.PostToolUse ?? []).filter((g) => !g.hooks?.some((h) => isOurs(h.command)));
-  const existed = (hooks.PostToolUse ?? []).length !== groups.length;
-  if (remove) {
-    if (!existed) return { integration: "claude", file: rel, action: "unchanged" };
-    hooks.PostToolUse = groups;
-    if (!groups.length) delete hooks.PostToolUse;
-    settings.hooks = hooks;
-    if (!Object.keys(hooks).length) delete settings.hooks;
-    writeJson(file, settings);
-    return { integration: "claude", file: rel, action: "removed" };
-  }
-  const entry: HookGroup = { matcher: "Edit|MultiEdit|Write", hooks: [{ type: "command", command: `${cmd} check --hook claude`, timeout: 60 }] };
-  const before = JSON.stringify(hooks.PostToolUse ?? []);
-  hooks.PostToolUse = [...groups, entry];
+  const post: HookGroup = { matcher: "Edit|MultiEdit|Write", hooks: [{ type: "command", command: `${cmd} check --hook claude`, timeout: 60 }] };
+  const pre: HookGroup = { matcher: "Edit|MultiEdit|Write|NotebookEdit", hooks: [{ type: "command", command: `${cmd} guard --host claude`, timeout: 30 }] };
+  const action = combine([upsertGroup(hooks, "PostToolUse", remove ? null : post), upsertGroup(hooks, "PreToolUse", remove || !guard ? null : pre)]);
+  if (action === "unchanged") return { integration: "claude", file: rel, action };
   settings.hooks = hooks;
-  if (JSON.stringify(hooks.PostToolUse) === before) return { integration: "claude", file: rel, action: "unchanged" };
+  if (!Object.keys(hooks).length) delete settings.hooks;
   writeJson(file, settings);
-  return { integration: "claude", file: rel, action: existed ? "updated" : "added" };
+  return { integration: "claude", file: rel, action };
+}
+
+/** Codex PreToolUse hook (experimental). File edits arrive as apply_patch; the matcher also accepts Edit and Write. */
+function installCodex(cwd: string, cmd: string, remove: boolean): InstallAction {
+  const rel = ".codex/hooks.json";
+  const file = path.join(cwd, rel);
+  const doc = readJson(file);
+  const hooks = (doc.hooks ?? {}) as Record<string, HookGroup[]>;
+  const entry: HookGroup = { matcher: "apply_patch|Edit|Write", hooks: [{ type: "command", command: `${cmd} guard --host codex` }] };
+  const action = upsertGroup(hooks, "PreToolUse", remove ? null : entry);
+  if (action === "unchanged") return { integration: "codex", file: rel, action };
+  doc.hooks = hooks;
+  if (!Object.keys(hooks).length) delete doc.hooks;
+  if (!Object.keys(doc).length) removeFile(file);
+  else writeJson(file, doc);
+  return {
+    integration: "codex",
+    file: rel,
+    action,
+    ...(remove ? {} : { note: "experimental: Codex runs project hooks only once the project is trusted and you have reviewed this hook in /hooks.\nRestart Codex afterwards. Check it with: ask the agent to edit a protected file; the edit must be refused." }),
+  };
+}
+
+/** Cursor preToolUse hook (experimental). Cursor's own file format: a flat list per event, with a tool matcher. */
+function installCursor(cwd: string, cmd: string, remove: boolean): InstallAction {
+  const rel = ".cursor/hooks.json";
+  const file = path.join(cwd, rel);
+  const doc = readJson(file);
+  const hooks = (doc.hooks ?? {}) as Record<string, { command?: string; matcher?: string }[]>;
+  const current = hooks.preToolUse ?? [];
+  const kept = current.filter((h) => !isOurs(h.command));
+  const existed = kept.length !== current.length;
+  if (remove) {
+    if (!existed) return { integration: "cursor", file: rel, action: "unchanged" };
+    if (kept.length) hooks.preToolUse = kept;
+    else delete hooks.preToolUse;
+    doc.hooks = hooks;
+    if (!Object.keys(hooks).length) delete doc.hooks;
+    if (Object.keys(doc).every((k) => k === "version")) removeFile(file);
+    else writeJson(file, doc);
+    return { integration: "cursor", file: rel, action: "removed" };
+  }
+  const entry = { command: `${cmd} guard --host cursor`, matcher: "Write|Edit|Delete|StrReplace" };
+  hooks.preToolUse = [...kept, entry];
+  if (JSON.stringify(hooks.preToolUse) === JSON.stringify(current)) return { integration: "cursor", file: rel, action: "unchanged" };
+  doc.version ??= 1;
+  doc.hooks = hooks;
+  writeJson(file, doc);
+  return { integration: "cursor", file: rel, action: existed ? "updated" : "added", note: "experimental: Cursor must reload hooks (it watches the file). Check it with: ask the agent to edit a protected file; the edit must be refused." };
 }
 
 function gitHooksDir(cwd: string): string | null {
@@ -153,9 +230,11 @@ function installMcp(cwd: string, config: HarnessConfig, cmd: string, remove: boo
 
 export function install(cwd: string, config: HarnessConfig, opts: { only?: Integration[]; command?: string; remove?: boolean } = {}): InstallAction[] {
   const cmd = opts.command ?? defaultCommand(cwd);
-  const only = opts.only ?? [...INTEGRATIONS];
+  const only = opts.only ?? DEFAULT_INTEGRATIONS;
   const out: InstallAction[] = [];
-  if (only.includes("claude")) out.push(installClaude(cwd, cmd, !!opts.remove));
+  if (only.includes("claude")) out.push(installClaude(cwd, cmd, !!opts.remove, config.protected.length > 0));
+  if (only.includes("cursor")) out.push(installCursor(cwd, cmd, !!opts.remove));
+  if (only.includes("codex")) out.push(installCodex(cwd, cmd, !!opts.remove));
   if (only.includes("git")) out.push(installGit(cwd, cmd, !!opts.remove));
   if (only.includes("mcp")) out.push(...installMcp(cwd, config, cmd, !!opts.remove));
   return out;

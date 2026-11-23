@@ -23,6 +23,7 @@ validation from the JSON Schema referenced on the first line that `gearness init
 | `gates.minScore` | 0–100 | `70` | Minimum score for `doctor --ci` (each workspace uses its own). |
 | `rules.disable` | list of rule ids | `[]` | Rules to skip (they also leave the score). |
 | `boundaries` | list | `[]` | Architecture rules checked against imports (below). |
+| `protected` | list of globs | `[]` | Paths agents must not edit, refused before the edit by `gearness guard` (below). |
 | `workspaces` | list of globs | `[]` | Monorepo packages that each have their own `harness.yaml`. |
 | `plugins` | list of npm packages | `[]` | Packages exporting extra rules. See [plugins.md](plugins.md). |
 | `eval.agent` | preset or command | `claude` | Agent used by `gearness eval`. See [eval.md](eval.md). |
@@ -51,6 +52,21 @@ Imports are read from:
 
 A glob `dir/**` covers the directory itself and everything below it; files inside a denied area may import each other.
 Aliases come from `compilerOptions.paths` (+ `baseUrl`) of the harness root's tsconfig; `extends` chains are not followed.
+
+## Protected paths
+
+```yaml
+protected:
+  - src/generated/**     # produced by a generator: change the source instead
+  - package-lock.json
+  - "**/*.min.js"
+  - vendor/**
+```
+
+Repo-relative globs for files an agent must not edit by hand: generated code, lockfiles, vendored code. They are enforced
+**before** the edit by `gearness guard`, a hook for Claude Code, Cursor and Codex (see
+[integrations.md](integrations.md#protected-paths-refusing-edits-before-they-happen)). Absolute paths and `..` are rejected.
+The list is advice with teeth, not a sandbox: it covers the agents' file-editing tools, not shell commands.
 
 ## Workspaces (monorepos)
 

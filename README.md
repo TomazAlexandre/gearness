@@ -101,6 +101,7 @@ plus Makefile, justfile and Taskfile targets. Monorepo? `npx gearness init --wor
 | `gearness ratchet list` | Show the ratchet log and the share of mechanical guardrails |
 | `gearness check [files]` | Fast check of changed files. `--staged` for pre-commit, `--hook claude` for Claude Code |
 | `gearness install` | Wire hooks and the MCP server into the repo. `--only`, `--command`, `--uninstall` |
+| `gearness guard --host <agent>` | Agent hook: refuse edits to `protected` paths before they happen. Claude Code; experimental for Cursor and Codex |
 | `gearness mcp` | MCP server (stdio) so agents can query the harness while they work |
 | `gearness eval` | Run eval tasks against an agent. `--runs`, `--parallel`, `--baseline <ref>`, `--agent`, `--min-pass-rate` |
 | `gearness eval new <id>` / `list` / `report` | Scaffold, list tasks, or show the pass-rate trend |
@@ -298,7 +299,8 @@ gates:
 - [x] TypeScript path aliases, Java / Kotlin / C# boundaries; parallel evals and trends; JSON Schema
 - [x] Architecture inference and graph, context X-ray, learning loop, regression gate, rename-aware doc fixes
 - [ ] Official rule presets (Next.js, Django, Spring, Go services)
-- [ ] Hooks for Cursor, Gemini CLI and Codex as their hook APIs stabilize
+- [x] `protected` paths refused before the edit: Claude Code hook, plus experimental Cursor and Codex hooks (`install --only cursor|codex`)
+- [ ] Gemini CLI hook, and confirming the Cursor and Codex hooks inside the real agents
 - [ ] Optional LLM-assisted plugins (suggest a guardrail for a ratchet entry, draft ARCHITECTURE.md)
 
 ## See it in 60 seconds

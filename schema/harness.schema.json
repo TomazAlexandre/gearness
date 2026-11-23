@@ -186,6 +186,13 @@
         }
       }
     },
+    "protected": {
+      "type": "array",
+      "description": "Repo-relative globs agents must not edit (generated code, lockfiles, vendored code). Enforced before the edit by `gearness guard`.",
+      "items": {
+        "type": "string"
+      }
+    },
     "workspaces": {
       "type": "array",
       "items": {
