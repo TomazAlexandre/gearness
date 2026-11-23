@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import path from "node:path";
 import { adapterStatus, sync } from "./adapters.js";
+import { GUARD_HOSTS, type GuardHost, runGuard } from "./guard.js";
 import { BADGE_END, BADGE_START, badgeMarkdown, badgeUrl, updateBadgeBlock } from "./badge.js";
 import { AGENTS, type AgentId, CONFIG_FILE, type HarnessConfig, loadConfig, STACKS, type Stack } from "./config.js";
 import { checkFiles, fileFromClaudeHook, hookFeedback } from "./check.js";
@@ -59,6 +60,7 @@ ${c.bold("Commands")}
   sync              Regenerate agent files (CLAUDE.md, Cursor, Copilot, …) from AGENTS.md
   ratchet add|list  Turn agent failures into durable guardrails / show the log
   check [files…]    Fast check of changed files (boundaries, secrets, docs) for hooks
+  guard --host H    Refuse edits to 'protected' paths before they happen (hook for claude, cursor, codex; reads the payload on stdin)
   install           Wire gearness into the agent loop: Claude Code hook, git pre-commit, MCP server
   mcp               Run the MCP server (stdio) so agents can query the harness
   boundaries suggest  Infer the layering your code already follows and lock it in (--write; --strict freezes the graph)
@@ -539,6 +541,20 @@ async function cmdCheck(cwd: string, files: string[], f: Flags): Promise<number>
   return errors ? 1 : 0;
 }
 
+/** Agent hook: answers on stdout in the host's own format. Exits 0 always: a guard problem must never stop an agent. */
+function cmdGuard(cwd: string, f: Flags): number {
+  const host = str(f, "host");
+  if (!host || !GUARD_HOSTS.includes(host as GuardHost)) throw new UsageError(`--host is required and accepts: ${GUARD_HOSTS.join(", ")}`);
+  let input = "";
+  try {
+    input = fs.readFileSync(0, "utf8");
+  } catch {
+    /* no stdin: treated as an empty payload, which is allowed */
+  }
+  process.stdout.write(runGuard(host as GuardHost, input, cwd));
+  return 0;
+}
+
 function cmdInstall(cwd: string, f: Flags): number {
   const config = requireConfig(cwd);
   const only = str(f, "only")?.split(",").map((s) => s.trim()) as Integration[] | undefined;
@@ -733,6 +749,7 @@ async function main(): Promise<number> {
     case "learn": return cmdLearn(cwd, flags);
     case "boundaries": return cmdBoundaries(cwd, sub, flags);
     case "badge": return cmdBadge(cwd, flags, sub);
+    case "guard": return cmdGuard(cwd, flags);
     case "rules": return cmdRules(cwd, flags);
     default:
       throw new UsageError(`unknown command "${cmd}". Run \`${TOOL} --help\`.`);

@@ -26,6 +26,47 @@ On a violation the hook exits with code 2 and writes the problem to stderr; Clau
 fixes it immediately. When the agent edits `AGENTS.md`, the hook also regenerates every adapter file, so Cursor,
 Copilot and the rest never drift. Malformed input or files outside the repository never block the agent.
 
+## Protected paths: refusing edits before they happen
+
+The Claude Code hook above checks a file **after** the edit. `protected` in `harness.yaml` (see
+[configuration.md](configuration.md#protected-paths)) works the other way: `gearness guard` runs **before** an agent edits a
+file and refuses the edit when the path is protected. The agent is told which path and which rule, and nothing else.
+
+```bash
+gearness install                 # Claude Code: adds a PreToolUse guard while `protected` is not empty
+gearness install --only cursor   # Cursor (experimental): .cursor/hooks.json
+gearness install --only codex    # Codex (experimental): .codex/hooks.json
+```
+
+Run `gearness install` again after you change `protected`: the Claude Code guard is added when the list has entries and
+removed when it is empty, so a project that does not use the feature pays for no extra process per edit.
+
+| Agent | Hook | Status |
+|---|---|---|
+| Claude Code | `PreToolUse` on `Edit`, `MultiEdit`, `Write`, `NotebookEdit` | Follows the documented hook format |
+| Cursor | `preToolUse` on `Write`, `Edit`, `Delete`, `StrReplace` | **Experimental.** Built from Cursor's documentation; not yet confirmed inside the agent |
+| Codex | `PreToolUse` on `apply_patch` (also matches `Edit` and `Write`) | **Experimental.** Built from Codex's documentation; not yet confirmed inside the agent |
+
+**What it does not do.** Read this before relying on it.
+
+- It looks at **paths** in the agent's file-editing tools. A shell command such as `sed -i` or `echo > file` is not
+  intercepted. It is a guardrail for the common case, not a security boundary.
+- Codex only runs a project's hooks once the project is trusted and you have reviewed the hook in `/hooks`; restart Codex after
+  installing. A Cursor hook that fails lets the action through by default, and so does this one: **a problem inside gearness
+  never blocks an agent**, by design, so a missing or broken install protects nothing instead of stopping your work.
+- Agents differ in what they report for an edit, and these formats move. If a host sends a shape the guard does not recognise,
+  the edit is allowed.
+
+**Checking it.** After installing, ask the agent to edit a protected file. The edit must be refused with a message naming the
+path. If it is not, the hook is not loaded (trust, restart, or the wrong folder). You can also feed the guard a payload by hand:
+
+```bash
+echo '{"tool_name":"Write","tool_input":{"file_path":"src/generated/api.ts"}}' | gearness guard --host cursor
+```
+
+It prints `{"permission":"deny",...}` for a protected path and `{"permission":"allow"}` otherwise. Claude Code and Codex hosts
+print a denial the same way and print nothing to allow, because Codex rejects an explicit `allow`.
+
 ## Git pre-commit
 
 `gearness check --staged` checks the staged files before each commit, for humans and agents alike. gearness writes to

@@ -51,6 +51,8 @@ export interface HarnessConfig {
   rules: { disable: string[] };
   /** Architecture boundaries checked against real imports. */
   boundaries: Boundary[];
+  /** Repo-relative globs agents must not edit (generated code, lockfiles, vendored code). Enforced before the edit by `gearness guard`. */
+  protected: string[];
   /** Sub-projects (globs) that each have their own harness.yaml. */
   workspaces: string[];
   /** npm packages that export extra rules. Local rules are loaded from .harness/rules/. */
@@ -70,6 +72,7 @@ export function defaultConfig(partial: Partial2<HarnessConfig> & { project: { na
     gates: { minScore: 70, ...(partial.gates ?? {}) },
     rules: { disable: [], ...(partial.rules ?? {}) } as HarnessConfig["rules"],
     boundaries: (partial.boundaries as Boundary[]) ?? [],
+    protected: (partial.protected as string[]) ?? [],
     workspaces: (partial.workspaces as string[]) ?? [],
     plugins: (partial.plugins as string[]) ?? [],
     eval: { agent: "claude", tasks: ".harness/evals", timeoutSeconds: 900, ...(partial.eval ?? {}) },
@@ -140,6 +143,12 @@ export function parseConfig(text: string): LoadResult {
         else if (b.except !== undefined && !isStrArr(b.except)) errors.push(`\`boundaries[${i}].except\` must be a list of globs`);
       });
   }
+  if (raw.protected !== undefined) {
+    if (!isStrArr(raw.protected)) errors.push("`protected` must be a list of globs");
+    else
+      for (const g of raw.protected)
+        if (/^([\\/]|[A-Za-z]:)/.test(g) || g.split(/[\\/]/).includes("..")) errors.push(`\`protected\` entry "${g}" must be a repo-relative glob without ..`);
+  }
   for (const k of ["workspaces", "plugins"]) if (raw[k] !== undefined && !isStrArr(raw[k])) errors.push(`\`${k}\` must be a list of strings`);
   const ev = raw.eval;
   if (ev !== undefined) {
@@ -168,6 +177,7 @@ export function parseConfig(text: string): LoadResult {
       ...(Array.isArray(b.except) ? { except: b.except as string[] } : {}),
       ...(typeof b.message === "string" ? { message: b.message } : {}),
     })),
+    protected: (raw.protected as string[]) ?? [],
     workspaces: (raw.workspaces as string[]) ?? [],
     plugins: (raw.plugins as string[]) ?? [],
     eval: (ev as Partial<EvalConfig>) ?? {},
@@ -205,6 +215,7 @@ export function serializeConfig(config: HarnessConfig): string {
     gates: config.gates,
     rules: config.rules,
   };
+  if (config.protected.length) body.protected = config.protected;
   if (config.workspaces.length) body.workspaces = config.workspaces;
   if (config.plugins.length) body.plugins = config.plugins;
   // Always emit boundaries (empty) with a commented example so teams discover the feature.
