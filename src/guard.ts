@@ -27,6 +27,26 @@ const PATCH_HEADERS = /^\*\*\* (?:Add File|Update File|Delete File|Move to): (.+
 type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
+/**
+ * Resolves symlinks so paths compare equal (macOS: /var is a link to /private/var). Works for files that do not exist
+ * yet by resolving the deepest existing ancestor and re-appending the rest. Never throws.
+ */
+function canonical(p: string): string {
+  const abs = path.resolve(p);
+  const tail: string[] = [];
+  let dir = abs;
+  for (;;) {
+    try {
+      return path.join(fs.realpathSync.native(dir), ...tail);
+    } catch {
+      const up = path.dirname(dir);
+      if (up === dir) return abs;
+      tail.unshift(path.basename(dir));
+      dir = up;
+    }
+  }
+}
+
 /** Files an edit tool call targets: path fields, and the file headers of an apply_patch patch wherever the host nests it. */
 export function editedFiles(payload: unknown): string[] {
   const found = new Set<string>();
@@ -62,8 +82,9 @@ export function guardDecision(root: string, config: HarnessConfig, payload: unkn
   const roots = payload.workspace_roots;
   const base = typeof payload.cwd === "string" && payload.cwd ? payload.cwd : Array.isArray(roots) && typeof roots[0] === "string" ? roots[0] : root;
   const blocked: GuardDecision["blocked"] = [];
+  const realRoot = canonical(root);
   for (const f of editedFiles(payload)) {
-    const rel = path.relative(root, path.isAbsolute(f) ? f : path.resolve(base, f));
+    const rel = path.relative(realRoot, canonical(path.isAbsolute(f) ? f : path.resolve(base, f)));
     if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) continue;
     const p = rel.split(path.sep).join("/");
     const glob = config.protected.find((g) => matchesGlob(p, g));
