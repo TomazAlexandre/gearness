@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/TomazAlexandre/gearness/compare/v0.6.0...v0.7.0) (2026-11-24)
+
+
+### Features
+
+* **guard:** refuse edits to protected paths before they happen, with experimental Cursor and Codex hooks ([ffd8523](https://github.com/TomazAlexandre/gearness/commit/ffd8523a7e66a3f3af9aadc60273551cc9981b9a))
+* **guard:** refuse edits to protected paths before they happen, with experimental Cursor and Codex hooks ([7c9800f](https://github.com/TomazAlexandre/gearness/commit/7c9800f4efcc28eb0c6592ed23ea9272e37d1c8e))
+
+
+### Bug Fixes
+
+* **guard:** resolve symlinks before comparing paths (macOS /var -&gt; /private/var) ([2528b0f](https://github.com/TomazAlexandre/gearness/commit/2528b0f921d5633f052a033fef308ed8ccbabef5))
+
 ## [0.6.0](https://github.com/TomazAlexandre/gearness/compare/v0.5.0...v0.6.0) (2026-11-18)
 
 
