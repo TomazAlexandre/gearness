@@ -75,6 +75,18 @@ export interface GuardDecision {
 
 const ALLOW: GuardDecision = { allow: true, blocked: [] };
 
+/** Repo-relative POSIX paths for a file: as given (against `root`) and symlink-resolved (against `realRoot`). Outside the repo → none. */
+function relativeCandidates(root: string, realRoot: string, abs: string): string[] {
+  const out = new Set<string>();
+  const pairs: [string, string][] = [[root, abs], [realRoot, canonical(abs)]];
+  for (const [r, a] of pairs) {
+    const rel = path.relative(r, a);
+    if (!rel || rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) continue;
+    out.add(rel.split(path.sep).join("/"));
+  }
+  return [...out];
+}
+
 /** Decides whether a tool call may proceed. Paths outside the repository are never this tool's business. */
 export function guardDecision(root: string, config: HarnessConfig, payload: unknown): GuardDecision {
   if (!isObj(payload) || !config.protected.length) return ALLOW;
@@ -83,12 +95,18 @@ export function guardDecision(root: string, config: HarnessConfig, payload: unkn
   const base = typeof payload.cwd === "string" && payload.cwd ? payload.cwd : Array.isArray(roots) && typeof roots[0] === "string" ? roots[0] : root;
   const blocked: GuardDecision["blocked"] = [];
   const realRoot = canonical(root);
+  // macOS and Windows file systems ignore case, so `Package-Lock.json` is the protected `package-lock.json` there.
+  const fold = process.platform === "win32" || process.platform === "darwin";
   for (const f of editedFiles(payload)) {
-    const rel = path.relative(realRoot, canonical(path.isAbsolute(f) ? f : path.resolve(base, f)));
-    if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) continue;
-    const p = rel.split(path.sep).join("/");
-    const glob = config.protected.find((g) => matchesGlob(p, g));
-    if (glob) blocked.push({ file: p, glob });
+    const abs = path.isAbsolute(f) ? f : path.resolve(base, f);
+    // Check the path as given AND with symlinks resolved: either one landing on a protected glob blocks the edit.
+    for (const p of relativeCandidates(root, realRoot, abs)) {
+      const glob = config.protected.find((g) => matchesGlob(p, g) || (fold && matchesGlob(p.toLowerCase(), g.toLowerCase())));
+      if (glob) {
+        blocked.push({ file: p, glob });
+        break;
+      }
+    }
   }
   if (!blocked.length) return ALLOW;
   const files = blocked.slice(0, 5).map((b) => b.file);
