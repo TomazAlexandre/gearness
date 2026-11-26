@@ -1,5 +1,13 @@
 # Changelog
 
+
+
+## 0.7.1
+### Fixed
+- guard: resolve symlinks before comparing paths. On macOS, protected files
+  reached through /var (-> /private/var) were allowed instead of denied.
+- guard: match protected globs case-insensitively on macOS and Windows.
+
 ## [0.7.0](https://github.com/TomazAlexandre/gearness/compare/v0.6.0...v0.7.0) (2026-11-24)
 
 
